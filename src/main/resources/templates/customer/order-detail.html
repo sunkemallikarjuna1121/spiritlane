@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('Order Detail')}"></head>
+<body>
+<div th:replace="~{fragments :: toastContainer}"></div>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h2 class="section-title mb-0">
+            <i class="fas fa-box me-2"></i>Order Detail
+        </h2>
+        <a th:href="@{/customer/orders}" class="btn-outline-sl px-3 py-2" style="font-size:0.85rem;">
+            <i class="fas fa-arrow-left me-1"></i>Back to Orders
+        </a>
+    </div>
+    <div th:replace="~{fragments :: alerts}"></div>
+
+    <div class="row g-4">
+        <!-- Left: Order info + items -->
+        <div class="col-lg-8">
+
+            <!-- Status Banner -->
+            <div class="sl-card mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <div style="font-size:0.8rem;color:var(--text-muted);">Order Number</div>
+                    <div style="font-size:1.1rem;font-weight:700;color:var(--primary-light);"
+                         th:text="${order.orderNumber}"></div>
+                </div>
+                <div>
+                    <div style="font-size:0.8rem;color:var(--text-muted);">Placed On</div>
+                    <div th:text="${#temporals.format(order.createdAt,'dd MMM yyyy, hh:mm a')}"></div>
+                </div>
+                <div>
+                    <span class="status-badge"
+                          th:classappend="${'status-' + #strings.toLowerCase(#strings.replace(order.orderStatus.name(), '_', '-'))}"
+                          th:text="${order.orderStatus}"></span>
+                </div>
+                <!-- Cancel button -->
+                <div th:if="${order.orderStatus.name() == 'PENDING' or order.orderStatus.name() == 'CONFIRMED'}">
+                    <form th:action="@{/customer/orders/{id}/cancel(id=${order.id})}" method="post"
+                          onsubmit="return confirm('Are you sure you want to cancel this order?')">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <input type="hidden" name="reason" value="Cancelled by customer"/>
+                        <button type="submit"
+                                style="background:none;border:1px solid var(--danger);color:var(--danger);border-radius:var(--radius-sm);padding:0.35rem 0.9rem;cursor:pointer;font-size:0.82rem;">
+                            <i class="fas fa-times me-1"></i>Cancel Order
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Order Items -->
+            <div class="sl-card mb-3">
+                <h5 style="color:var(--primary-light);margin-bottom:1rem;">
+                    <i class="fas fa-list me-2"></i>Items Ordered
+                </h5>
+                <div th:each="item : ${order.orderItems}" class="cart-item-row">
+                    <img class="cart-item-img"
+                         th:src="${item.inventory.product.getPrimaryImageUrl()}"
+                         th:alt="${item.productName}"
+                         onerror="this.src='/images/product-placeholder.png'"/>
+                    <div class="flex-grow-1">
+                        <h6 style="color:var(--text-light);margin-bottom:0.2rem;"
+                            th:text="${item.productName}"></h6>
+                        <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:0;"
+                           th:text="'Qty: ' + ${item.quantity} + ' × ₹' + ${item.unitPrice}"></p>
+                    </div>
+                    <div style="font-weight:700;color:var(--primary-light);"
+                         th:text="'₹' + ${item.totalPrice}"></div>
+                </div>
+            </div>
+
+            <!-- Delivery Address -->
+            <div class="sl-card">
+                <h5 style="color:var(--primary-light);margin-bottom:0.8rem;">
+                    <i class="fas fa-map-marker-alt me-2"></i>Delivery Address
+                </h5>
+                <p style="color:var(--text-light);margin-bottom:0;"
+                   th:text="${order.deliveryAddress.getFullAddress()}"></p>
+            </div>
+        </div>
+
+        <!-- Right: Payment + Shop info -->
+        <div class="col-lg-4">
+            <div class="order-summary mb-3">
+                <h5 style="color:var(--primary-light);margin-bottom:1rem;">
+                    <i class="fas fa-receipt me-2"></i>Bill Summary
+                </h5>
+                <div class="summary-row"><span>Subtotal</span><span th:text="'₹' + ${order.subtotal}"></span></div>
+                <div class="summary-row"><span>Delivery</span><span th:text="'₹' + ${order.deliveryCharge}"></span></div>
+                <div class="summary-row"><span>GST</span><span th:text="'₹' + ${order.taxAmount}"></span></div>
+                <div class="summary-row" th:if="${order.discountAmount.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                    <span>Discount</span>
+                    <span style="color:var(--success);" th:text="'-₹' + ${order.discountAmount}"></span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span>Total Paid</span>
+                    <span th:text="'₹' + ${order.totalAmount}"></span>
+                </div>
+            </div>
+
+            <div class="sl-card mb-3">
+                <h5 style="color:var(--primary-light);margin-bottom:0.8rem;">
+                    <i class="fas fa-credit-card me-2"></i>Payment
+                </h5>
+                <div class="summary-row">
+                    <span>Status</span>
+                    <span th:if="${order.paymentStatus.name() == 'PAID'}"
+                          style="color:var(--success);font-weight:700;">Paid ✓</span>
+                    <span th:unless="${order.paymentStatus.name() == 'PAID'}"
+                          style="color:#ffc107;font-weight:700;" th:text="${order.paymentStatus}"></span>
+                </div>
+                <div class="summary-row" th:if="${order.payment != null and order.payment.razorpayPaymentId != null}">
+                    <span>Razorpay ID</span>
+                    <span style="font-size:0.78rem;color:var(--text-muted);"
+                          th:text="${order.payment.razorpayPaymentId}"></span>
+                </div>
+            </div>
+
+            <div class="sl-card">
+                <h5 style="color:var(--primary-light);margin-bottom:0.8rem;">
+                    <i class="fas fa-store me-2"></i>Shop Details
+                </h5>
+                <p style="color:var(--text-light);font-weight:600;" th:text="${order.shop.shopName}"></p>
+                <p style="color:var(--text-muted);font-size:0.85rem;" th:text="${order.shop.phone}"></p>
+                <p style="color:var(--text-muted);font-size:0.85rem;" th:text="${order.shop.getFullAddress()}"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments :: footer}"></footer>
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

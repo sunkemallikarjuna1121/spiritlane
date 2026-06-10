@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('Register Shop')}"></head>
+<link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="sl-dashboard-wrapper">
+    <aside class="sl-sidebar">
+        <div class="sidebar-header">
+            <div style="font-family:var(--font-brand);font-size:1.2rem;color:var(--primary-light);">Spirit<span style="color:var(--accent);">Lane</span></div>
+            <div class="sidebar-role-badge">Shop Owner</div>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="nav-item"><a th:href="@{/shop/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt"></i>Dashboard</a></li>
+            <li class="nav-item"><a th:href="@{/shop/inventory}" class="nav-link"><i class="fas fa-boxes"></i>Inventory</a></li>
+            <li class="nav-item"><a th:href="@{/shop/orders}" class="nav-link"><i class="fas fa-box"></i>Orders</a></li>
+        </ul>
+    </aside>
+
+    <div class="sl-dashboard-content">
+        <div class="page-header">
+            <div>
+                <h1><i class="fas fa-store me-2"></i>Register Your Shop</h1>
+                <p class="page-subtitle">Fill in your shop details to get started. Admin will review and approve.</p>
+            </div>
+        </div>
+
+        <div th:replace="~{fragments :: alerts}"></div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="sl-card">
+                    <form th:action="@{/shop/register}" th:object="${shop}" method="post" novalidate>
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                        <h5 style="color:var(--primary-light);margin-bottom:1.2rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border-color);">
+                            <i class="fas fa-info-circle me-2"></i>Basic Information
+                        </h5>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Shop Name *</label>
+                                    <input type="text" th:field="*{shopName}" class="sl-form-control"
+                                           placeholder="e.g. Royal Wine & Spirits" required/>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Liquor License Number *</label>
+                                    <input type="text" th:field="*{licenseNumber}" class="sl-form-control"
+                                           placeholder="e.g. MH/LIC/2024/001" required/>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">GST Number</label>
+                                    <input type="text" th:field="*{gstNumber}" class="sl-form-control"
+                                           placeholder="Optional"/>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Shop Phone *</label>
+                                    <input type="tel" th:field="*{phone}" class="sl-form-control"
+                                           placeholder="10-digit number" required/>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Shop Email</label>
+                                    <input type="email" th:field="*{email}" class="sl-form-control"
+                                           placeholder="shop@example.com"/>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Description</label>
+                                    <textarea th:field="*{description}" class="sl-form-control" rows="3"
+                                              placeholder="Brief description of your shop..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h5 style="color:var(--primary-light);margin:1.5rem 0 1.2rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border-color);">
+                            <i class="fas fa-map-marker-alt me-2"></i>Shop Address
+                        </h5>
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Address Line 1 *</label>
+                                    <input type="text" th:field="*{addressLine1}" class="sl-form-control"
+                                           placeholder="Door No, Street Name" required/>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Address Line 2</label>
+                                    <input type="text" th:field="*{addressLine2}" class="sl-form-control"
+                                           placeholder="Area, Locality"/>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">City *</label>
+                                    <input type="text" th:field="*{city}" class="sl-form-control"
+                                           placeholder="City" required/>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">State *</label>
+                                    <select th:field="*{state}" class="sl-form-control" required>
+                                        <option value="">Select State</option>
+                                        <option value="Andhra Pradesh">Andhra Pradesh</option>
+                                        <option value="Delhi">Delhi</option>
+                                        <option value="Goa">Goa</option>
+                                        <option value="Gujarat">Gujarat</option>
+                                        <option value="Karnataka">Karnataka</option>
+                                        <option value="Kerala">Kerala</option>
+                                        <option value="Maharashtra">Maharashtra</option>
+                                        <option value="Punjab">Punjab</option>
+                                        <option value="Rajasthan">Rajasthan</option>
+                                        <option value="Tamil Nadu">Tamil Nadu</option>
+                                        <option value="Telangana">Telangana</option>
+                                        <option value="Uttar Pradesh">Uttar Pradesh</option>
+                                        <option value="West Bengal">West Bengal</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Pincode *</label>
+                                    <input type="text" th:field="*{pincode}" class="sl-form-control"
+                                           placeholder="6-digit pincode" maxlength="6" required/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h5 style="color:var(--primary-light);margin:1.5rem 0 1.2rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border-color);">
+                            <i class="fas fa-clock me-2"></i>Operating Hours
+                        </h5>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Opening Time</label>
+                                    <input type="time" th:field="*{openingTime}" class="sl-form-control" value="10:00"/>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Closing Time</label>
+                                    <input type="time" th:field="*{closingTime}" class="sl-form-control" value="22:00"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="sl-alert sl-alert-info mt-3">
+                            <i class="fas fa-info-circle"></i>
+                            Your shop will be reviewed by the admin before going live. This typically takes 24 hours.
+                        </div>
+
+                        <div class="d-flex gap-3 mt-4">
+                            <button type="submit" class="btn-primary-sl px-4 py-2">
+                                <i class="fas fa-paper-plane me-2"></i>Submit for Approval
+                            </button>
+                            <a th:href="@{/shop/dashboard}" class="btn-outline-sl px-4 py-2">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

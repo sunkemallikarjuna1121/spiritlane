@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('Manage Shops')}"></head>
+<link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="sl-dashboard-wrapper">
+    <aside class="sl-sidebar">
+        <div class="sidebar-header">
+            <div style="font-family:var(--font-brand);font-size:1.2rem;color:var(--primary-light);">Spirit<span style="color:var(--accent);">Lane</span></div>
+            <div class="sidebar-role-badge">Admin Panel</div>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="nav-item"><a th:href="@{/admin/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt"></i>Dashboard</a></li>
+            <li class="nav-item"><a th:href="@{/admin/shops}" class="nav-link active"><i class="fas fa-store"></i>Shops</a></li>
+            <li class="nav-item"><a th:href="@{/admin/customers}" class="nav-link"><i class="fas fa-users"></i>Customers</a></li>
+            <li class="nav-item"><a th:href="@{/admin/agents}" class="nav-link"><i class="fas fa-motorcycle"></i>Agents</a></li>
+            <li class="nav-item"><a th:href="@{/admin/orders}" class="nav-link"><i class="fas fa-box"></i>All Orders</a></li>
+            <li class="nav-item"><a th:href="@{/admin/products}" class="nav-link"><i class="fas fa-wine-bottle"></i>Products</a></li>
+        </ul>
+    </aside>
+
+    <div class="sl-dashboard-content">
+        <div class="page-header">
+            <h1><i class="fas fa-store me-2"></i>Shops Management</h1>
+        </div>
+        <div th:replace="~{fragments :: alerts}"></div>
+
+        <!-- Pending Approvals -->
+        <div th:if="${pendingShops != null and !#lists.isEmpty(pendingShops)}" class="table-container mb-4">
+            <div class="table-header">
+                <h3 style="color:var(--warning);"><i class="fas fa-clock me-2"></i>Pending Approvals
+                    <span class="badge ms-2" th:text="${#lists.size(pendingShops)}"></span>
+                </h3>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="sl-table">
+                    <thead>
+                        <tr><th>Shop Name</th><th>Owner</th><th>License</th><th>City</th><th>Phone</th><th>Registered</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="shop : ${pendingShops}">
+                            <td style="font-weight:600;" th:text="${shop.shopName}"></td>
+                            <td th:text="${shop.owner.fullName}"></td>
+                            <td style="font-size:0.82rem;color:var(--text-muted);" th:text="${shop.licenseNumber}"></td>
+                            <td th:text="${shop.city}"></td>
+                            <td th:text="${shop.phone}"></td>
+                            <td style="font-size:0.82rem;color:var(--text-muted);"
+                                th:text="${#temporals.format(shop.createdAt,'dd MMM yyyy')}"></td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <form th:action="@{/admin/shops/{id}/approve(id=${shop.id})}" method="post">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                        <button type="submit"
+                                                style="background:rgba(40,167,69,0.2);color:#6ee08a;border:1px solid rgba(40,167,69,0.3);border-radius:var(--radius-sm);padding:0.3rem 0.7rem;cursor:pointer;font-size:0.8rem;">
+                                            <i class="fas fa-check me-1"></i>Approve
+                                        </button>
+                                    </form>
+                                    <form th:action="@{/admin/shops/{id}/reject(id=${shop.id})}" method="post">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                        <button type="submit"
+                                                style="background:rgba(220,53,69,0.2);color:#ff6b6b;border:1px solid rgba(220,53,69,0.3);border-radius:var(--radius-sm);padding:0.3rem 0.7rem;cursor:pointer;font-size:0.8rem;"
+                                                onclick="return confirm('Reject this shop?')">
+                                            <i class="fas fa-times me-1"></i>Reject
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- All Active Shops -->
+        <div class="table-container">
+            <div class="table-header">
+                <h3><i class="fas fa-check-circle me-2"></i>Active Shops</h3>
+                <input type="text" class="table-search" placeholder="Search shops..." id="shopSearch"
+                       onkeyup="filterTable('shopSearch','shopsTableBody')"/>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="sl-table">
+                    <thead>
+                        <tr><th>Shop</th><th>Owner</th><th>City</th><th>Phone</th><th>Rating</th><th>Status</th><th>Approved</th></tr>
+                    </thead>
+                    <tbody id="shopsTableBody">
+                        <tr th:each="shop : ${shops.content}">
+                            <td>
+                                <div style="font-weight:600;color:var(--text-light);" th:text="${shop.shopName}"></div>
+                                <div style="font-size:0.78rem;color:var(--text-muted);" th:text="${shop.licenseNumber}"></div>
+                            </td>
+                            <td th:text="${shop.owner.fullName}"></td>
+                            <td th:text="${shop.city}"></td>
+                            <td th:text="${shop.phone}"></td>
+                            <td>
+                                <i class="fas fa-star" style="color:var(--primary);font-size:0.82rem;"></i>
+                                <span th:text="${shop.rating}"></span>
+                            </td>
+                            <td>
+                                <span th:if="${shop.isOpen}" class="status-badge status-delivered">Open</span>
+                                <span th:unless="${shop.isOpen}" class="status-badge status-cancelled">Closed</span>
+                            </td>
+                            <td>
+                                <span th:if="${shop.isApproved}" style="color:var(--success);font-size:0.82rem;">✓ Yes</span>
+                                <span th:unless="${shop.isApproved}" style="color:var(--danger);font-size:0.82rem;">✗ No</span>
+                            </td>
+                        </tr>
+                        <tr th:if="${shops.totalElements == 0}">
+                            <td colspan="7" class="text-center" style="color:var(--text-muted);padding:2rem;">No approved shops yet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments :: scripts}"></div>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

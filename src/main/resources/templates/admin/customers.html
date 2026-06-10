@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('Customers')}"></head>
+<link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+<div class="sl-dashboard-wrapper">
+    <aside class="sl-sidebar">
+        <div class="sidebar-header">
+            <div style="font-family:var(--font-brand);font-size:1.2rem;color:var(--primary-light);">Spirit<span style="color:var(--accent);">Lane</span></div>
+            <div class="sidebar-role-badge">Admin Panel</div>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="nav-item"><a th:href="@{/admin/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt"></i>Dashboard</a></li>
+            <li class="nav-item"><a th:href="@{/admin/shops}" class="nav-link"><i class="fas fa-store"></i>Shops</a></li>
+            <li class="nav-item"><a th:href="@{/admin/customers}" class="nav-link active"><i class="fas fa-users"></i>Customers</a></li>
+            <li class="nav-item"><a th:href="@{/admin/agents}" class="nav-link"><i class="fas fa-motorcycle"></i>Agents</a></li>
+            <li class="nav-item"><a th:href="@{/admin/orders}" class="nav-link"><i class="fas fa-box"></i>All Orders</a></li>
+            <li class="nav-item"><a th:href="@{/admin/products}" class="nav-link"><i class="fas fa-wine-bottle"></i>Products</a></li>
+        </ul>
+    </aside>
+    <div class="sl-dashboard-content">
+        <div class="page-header"><h1><i class="fas fa-users me-2"></i>Customers</h1></div>
+        <div th:replace="~{fragments :: alerts}"></div>
+        <div class="table-container">
+            <div class="table-header">
+                <h3>All Customers (<span th:text="${customers.totalElements}"></span>)</h3>
+                <input type="text" class="table-search" placeholder="Search..." id="custSearch"
+                       onkeyup="filterTable('custSearch','custBody')"/>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="sl-table">
+                    <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Joined</th><th>Age Verified</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody id="custBody">
+                        <tr th:each="c : ${customers.content}">
+                            <td style="font-weight:600;" th:text="${c.fullName}"></td>
+                            <td style="font-size:0.85rem;" th:text="${c.email}"></td>
+                            <td th:text="${c.phone}"></td>
+                            <td style="font-size:0.82rem;color:var(--text-muted);"
+                                th:text="${#temporals.format(c.createdAt,'dd MMM yyyy')}"></td>
+                            <td>
+                                <span th:if="${c.isAgeVerified}" style="color:var(--success);font-size:0.82rem;">✓ Yes</span>
+                                <span th:unless="${c.isAgeVerified}" style="color:var(--danger);font-size:0.82rem;">✗ No</span>
+                            </td>
+                            <td>
+                                <span th:if="${!c.isBlocked}" class="status-badge status-delivered">Active</span>
+                                <span th:if="${c.isBlocked}" class="status-badge status-cancelled">Blocked</span>
+                            </td>
+                            <td>
+                                <form th:if="${!c.isBlocked}" th:action="@{/admin/customers/{id}/block(id=${c.id})}" method="post" style="display:inline;">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" style="background:rgba(220,53,69,0.2);color:#ff6b6b;border:1px solid rgba(220,53,69,0.3);border-radius:var(--radius-sm);padding:0.25rem 0.6rem;cursor:pointer;font-size:0.78rem;">Block</button>
+                                </form>
+                                <form th:if="${c.isBlocked}" th:action="@{/admin/customers/{id}/unblock(id=${c.id})}" method="post" style="display:inline;">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" style="background:rgba(40,167,69,0.2);color:#6ee08a;border:1px solid rgba(40,167,69,0.3);border-radius:var(--radius-sm);padding:0.25rem 0.6rem;cursor:pointer;font-size:0.78rem;">Unblock</button>
+                                </form>
+                            </td>
+                        </tr>
+                        <tr th:if="${customers.totalElements == 0}">
+                            <td colspan="7" class="text-center" style="color:var(--text-muted);padding:2rem;">No customers yet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<div th:replace="~{fragments :: scripts}"></div>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

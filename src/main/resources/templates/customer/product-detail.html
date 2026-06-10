@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head th:replace="~{fragments :: head('Product Detail')}"></head>
+<body>
+<div th:replace="~{fragments :: toastContainer}"></div>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="container py-4">
+
+    <!-- Breadcrumb -->
+    <nav class="sl-breadcrumb mb-3">
+        <ol>
+            <li><a th:href="@{/home}">Home</a></li>
+            <li><a th:href="@{/products/browse}">Browse</a></li>
+            <li th:text="${inventory.product.category.name}"></li>
+            <li th:text="${inventory.product.name}"></li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <!-- ─── Product Images ─── -->
+        <div class="col-lg-5">
+            <div class="sl-card p-3">
+                <!-- Main image -->
+                <div style="aspect-ratio:1;overflow:hidden;border-radius:var(--radius-sm);background:var(--dark-surface);">
+                    <img id="mainImage"
+                         th:src="${inventory.product.getPrimaryImageUrl()}"
+                         th:alt="${inventory.product.name}"
+                         style="width:100%;height:100%;object-fit:cover;"
+                         onerror="this.src='/images/product-placeholder.png'"/>
+                </div>
+                <!-- Thumbnail strip -->
+                <div class="d-flex gap-2 mt-3 flex-wrap" th:if="${inventory.product.images != null and !#lists.isEmpty(inventory.product.images)}">
+                    <div th:each="img : ${inventory.product.images}"
+                         onclick="switchImage(this)"
+                         th:data-src="${img.imageUrl}"
+                         style="width:70px;height:70px;border-radius:var(--radius-sm);overflow:hidden;cursor:pointer;border:2px solid var(--border-color);transition:border-color 0.2s;">
+                        <img th:src="${img.imageUrl}" th:alt="${img.altText}"
+                             style="width:100%;height:100%;object-fit:cover;"
+                             onerror="this.src='/images/product-placeholder.png'"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── Product Info ─── -->
+        <div class="col-lg-7">
+            <div class="sl-card p-4">
+                <!-- Category & Type badges -->
+                <div class="d-flex gap-2 mb-2 flex-wrap">
+                    <span class="status-badge status-confirmed"
+                          th:text="${inventory.product.category.name}"></span>
+                    <span class="status-badge status-preparing"
+                          th:text="${inventory.product.productType}"></span>
+                    <span th:if="${inventory.product.isImported}"
+                          class="status-badge" style="background:rgba(255,107,43,0.2);color:var(--accent);">
+                        Imported
+                    </span>
+                </div>
+
+                <h1 style="font-size:1.8rem;color:var(--text-light);margin-bottom:0.3rem;"
+                    th:text="${inventory.product.name}"></h1>
+
+                <p style="color:var(--text-muted);font-size:0.95rem;" th:if="${inventory.product.brand != null}"
+                   th:text="'by ' + ${inventory.product.brand.name} + ' · ' + ${inventory.product.countryOfOrigin}"></p>
+
+                <!-- Price block -->
+                <div class="d-flex align-items-baseline gap-3 my-3">
+                    <span style="font-size:2rem;font-weight:700;color:var(--primary-light);"
+                          th:text="'₹' + ${inventory.sellingPrice}"></span>
+                    <span th:if="${inventory.mrp.compareTo(inventory.sellingPrice) > 0}"
+                          style="font-size:1.1rem;color:var(--text-muted);text-decoration:line-through;"
+                          th:text="'₹' + ${inventory.mrp}"></span>
+                    <span th:if="${inventory.discountPct != null and inventory.discountPct.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                          style="font-size:0.9rem;color:var(--success);font-weight:700;background:rgba(40,167,69,0.1);padding:2px 10px;border-radius:20px;"
+                          th:text="${#numbers.formatDecimal(inventory.discountPct,1,0) + '% OFF'}"></span>
+                </div>
+
+                <hr class="gold-divider" style="margin:1rem 0"/>
+
+                <!-- Product specs -->
+                <div class="row g-2 mb-3">
+                    <div class="col-6" th:if="${inventory.product.volumeMl != null}">
+                        <div style="background:var(--dark-surface);border-radius:var(--radius-sm);padding:0.7rem;text-align:center;">
+                            <div style="font-size:1.3rem;">🍾</div>
+                            <div style="font-size:0.75rem;color:var(--text-muted);">Volume</div>
+                            <div style="font-weight:700;color:var(--text-light);"
+                                 th:text="${inventory.product.volumeMl} + ' ml'"></div>
+                        </div>
+                    </div>
+                    <div class="col-6" th:if="${inventory.product.alcoholContent != null}">
+                        <div style="background:var(--dark-surface);border-radius:var(--radius-sm);padding:0.7rem;text-align:center;">
+                            <div style="font-size:1.3rem;">🔥</div>
+                            <div style="font-size:0.75rem;color:var(--text-muted);">ABV</div>
+                            <div style="font-weight:700;color:var(--text-light);"
+                                 th:text="${inventory.product.alcoholContent} + '%'"></div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div style="background:var(--dark-surface);border-radius:var(--radius-sm);padding:0.7rem;text-align:center;">
+                            <div style="font-size:1.3rem;">📦</div>
+                            <div style="font-size:0.75rem;color:var(--text-muted);">Stock</div>
+                            <div style="font-weight:700;"
+                                 th:style="${inventory.stockQuantity > 5} ? 'color:#6ee08a' : 'color:#ffc107'"
+                                 th:text="${inventory.stockQuantity > 0} ? (${inventory.stockQuantity > 5} ? 'In Stock' : 'Only ' + ${inventory.stockQuantity} + ' left') : 'Out of Stock'"></div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div style="background:var(--dark-surface);border-radius:var(--radius-sm);padding:0.7rem;text-align:center;">
+                            <div style="font-size:1.3rem;">🏪</div>
+                            <div style="font-size:0.75rem;color:var(--text-muted);">Shop</div>
+                            <div style="font-weight:700;color:var(--text-light);font-size:0.82rem;"
+                                 th:text="${inventory.shop.shopName}"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <p th:if="${inventory.product.description != null and !#strings.isEmpty(inventory.product.description)}"
+                   style="color:var(--text-muted);font-size:0.92rem;line-height:1.7;"
+                   th:text="${inventory.product.description}"></p>
+
+                <hr class="gold-divider" style="margin:1rem 0"/>
+
+                <!-- Add to Cart section -->
+                <div th:if="${inventory.isInStock()}" sec:authorize="hasRole('CUSTOMER')">
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <div class="qty-control">
+                            <button type="button" onclick="decrementQty()">−</button>
+                            <input type="number" id="productQty" value="1"
+                                   th:min="${inventory.minOrderQty}"
+                                   th:max="${inventory.maxOrderQty}" readonly/>
+                            <button type="button" onclick="incrementQty()">+</button>
+                        </div>
+                        <button class="btn-primary-sl px-4 py-2"
+                                th:data-inventory-id="${inventory.id}"
+                                onclick="addToCartWithQty(this)">
+                            <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                        </button>
+                        <button class="btn-accent-sl px-4 py-2"
+                                th:data-inventory-id="${inventory.id}"
+                                onclick="buyNow(this)">
+                            <i class="fas fa-bolt me-2"></i>Buy Now
+                        </button>
+                    </div>
+                    <small style="color:var(--text-muted);font-size:0.8rem;margin-top:0.5rem;display:block;">
+                        Min: <span th:text="${inventory.minOrderQty}"></span> &nbsp;|&nbsp;
+                        Max: <span th:text="${inventory.maxOrderQty}"></span> per order
+                    </small>
+                </div>
+
+                <div th:if="${!inventory.isInStock()}"
+                     class="sl-alert sl-alert-error">
+                    <i class="fas fa-times-circle"></i>
+                    This product is currently out of stock.
+                </div>
+
+                <a th:if="${inventory.isInStock()}"
+                   th:href="@{/auth/login}"
+                   class="btn-primary-sl w-100 py-3"
+                   sec:authorize="isAnonymous()">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login to Purchase
+                </a>
+
+                <!-- Delivery info -->
+                <div class="d-flex gap-3 mt-3 flex-wrap">
+                    <span style="font-size:0.82rem;color:var(--text-muted);">
+                        <i class="fas fa-truck me-1" style="color:var(--primary)"></i>Home Delivery Available
+                    </span>
+                    <span style="font-size:0.82rem;color:var(--text-muted);">
+                        <i class="fas fa-shield-alt me-1" style="color:var(--primary)"></i>Age Verified Delivery
+                    </span>
+                    <span style="font-size:0.82rem;color:var(--text-muted);">
+                        <i class="fas fa-credit-card me-1" style="color:var(--primary)"></i>Online Payment Only
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments :: footer}"></footer>
+<div th:replace="~{fragments :: scripts}"></div>
+<script th:src="@{/js/main.js}"></script>
+<script>
+    var minQty = /*[[${inventory.minOrderQty}]]*/ 1;
+    var maxQty = /*[[${inventory.maxOrderQty}]]*/ 10;
+
+    function decrementQty() {
+        var input = document.getElementById('productQty');
+        var val = parseInt(input.value);
+        if (val > minQty) input.value = val - 1;
+    }
+
+    function incrementQty() {
+        var input = document.getElementById('productQty');
+        var val = parseInt(input.value);
+        if (val < maxQty) input.value = val + 1;
+    }
+
+    function addToCartWithQty(btn) {
+        var inventoryId = btn.getAttribute('data-inventory-id');
+        var qty = parseInt(document.getElementById('productQty').value);
+        addToCartQty(inventoryId, qty);
+    }
+
+    function buyNow(btn) {
+        var inventoryId = btn.getAttribute('data-inventory-id');
+        var qty = parseInt(document.getElementById('productQty').value);
+        $.ajax({
+            url: '/cart/add',
+            method: 'POST',
+            data: { inventoryId: inventoryId, quantity: qty,
+                    _csrf: $('meta[name="_csrf"]').attr('content') },
+            success: function(resp) {
+                if (resp.success) window.location.href = '/cart';
+                else showToast(resp.message, 'error');
+            }
+        });
+    }
+
+    function switchImage(el) {
+        document.getElementById('mainImage').src = el.getAttribute('data-src');
+        document.querySelectorAll('[data-src]').forEach(function(t) {
+            t.style.borderColor = 'var(--border-color)';
+        });
+        el.style.borderColor = 'var(--primary)';
+    }
+
+    $(document).ready(function() { updateCartCount(); });
+</script>
+</body>
+</html>

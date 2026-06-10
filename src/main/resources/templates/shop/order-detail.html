@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('Order Detail')}"></head>
+<link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="sl-dashboard-wrapper">
+    <aside class="sl-sidebar">
+        <div class="sidebar-header">
+            <div style="font-family:var(--font-brand);font-size:1.2rem;color:var(--primary-light);">Spirit<span style="color:var(--accent);">Lane</span></div>
+            <div class="sidebar-role-badge">Shop Owner</div>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="nav-item"><a th:href="@{/shop/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt"></i>Dashboard</a></li>
+            <li class="nav-item"><a th:href="@{/shop/inventory}" class="nav-link"><i class="fas fa-boxes"></i>Inventory</a></li>
+            <li class="nav-item"><a th:href="@{/shop/orders}" class="nav-link active"><i class="fas fa-box"></i>Orders</a></li>
+        </ul>
+    </aside>
+
+    <div class="sl-dashboard-content">
+        <div class="page-header">
+            <div>
+                <h1><i class="fas fa-box me-2"></i>Order Detail</h1>
+                <p class="page-subtitle" th:text="'Order #' + ${order.orderNumber}"></p>
+            </div>
+            <a th:href="@{/shop/orders}" class="btn-outline-sl px-3 py-2" style="font-size:0.85rem;">
+                <i class="fas fa-arrow-left me-1"></i>Back to Orders
+            </a>
+        </div>
+
+        <div th:replace="~{fragments :: alerts}"></div>
+
+        <div class="row g-4">
+            <!-- Left: items + address -->
+            <div class="col-lg-8">
+
+                <!-- Status + Update -->
+                <div class="sl-card mb-3">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <div style="font-size:0.8rem;color:var(--text-muted);">Current Status</div>
+                            <span class="status-badge mt-1"
+                                  th:classappend="${'status-' + #strings.toLowerCase(#strings.replace(order.orderStatus.name(),'_','-'))}"
+                                  th:text="${order.orderStatus}"></span>
+                        </div>
+                        <!-- Update Status Form -->
+                        <form th:action="@{/shop/orders/{id}/status(id=${order.id})}" method="post"
+                              class="d-flex gap-2 align-items-center flex-wrap">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                            <select name="status" class="sl-form-control" style="width:auto;">
+                                <option value="CONFIRMED"    th:selected="${order.orderStatus.name() == 'CONFIRMED'}">Confirmed</option>
+                                <option value="PREPARING"    th:selected="${order.orderStatus.name() == 'PREPARING'}">Preparing</option>
+                                <option value="DISPATCHED"   th:selected="${order.orderStatus.name() == 'DISPATCHED'}">Dispatched</option>
+                                <option value="OUT_FOR_DELIVERY" th:selected="${order.orderStatus.name() == 'OUT_FOR_DELIVERY'}">Out for Delivery</option>
+                                <option value="DELIVERED"    th:selected="${order.orderStatus.name() == 'DELIVERED'}">Delivered</option>
+                                <option value="REJECTED"     th:selected="${order.orderStatus.name() == 'REJECTED'}">Reject Order</option>
+                            </select>
+                            <button type="submit" class="btn-primary-sl px-3 py-2" style="font-size:0.85rem;">
+                                <i class="fas fa-sync me-1"></i>Update
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <div class="sl-card mb-3">
+                    <h5 style="color:var(--primary-light);margin-bottom:1rem;">
+                        <i class="fas fa-list me-2"></i>Ordered Items
+                    </h5>
+                    <div th:each="item : ${order.orderItems}" class="cart-item-row">
+                        <img class="cart-item-img"
+                             th:src="${item.inventory.product.getPrimaryImageUrl()}"
+                             th:alt="${item.productName}"
+                             onerror="this.src='/images/product-placeholder.png'"/>
+                        <div class="flex-grow-1">
+                            <h6 style="color:var(--text-light);margin-bottom:0.2rem;"
+                                th:text="${item.productName}"></h6>
+                            <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:0;"
+                               th:text="'Qty: ' + ${item.quantity} + '  ×  ₹' + ${item.unitPrice}"></p>
+                        </div>
+                        <div style="font-weight:700;color:var(--primary-light);"
+                             th:text="'₹' + ${item.totalPrice}"></div>
+                    </div>
+                </div>
+
+                <!-- Customer & Delivery -->
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="sl-card">
+                            <h5 style="color:var(--primary-light);margin-bottom:0.8rem;">
+                                <i class="fas fa-user me-2"></i>Customer
+                            </h5>
+                            <p style="color:var(--text-light);font-weight:600;margin-bottom:0.3rem;"
+                               th:text="${order.customer.fullName}"></p>
+                            <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:0.2rem;"
+                               th:text="${order.customer.phone}"></p>
+                            <p style="color:var(--text-muted);font-size:0.85rem;"
+                               th:text="${order.customer.email}"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="sl-card">
+                            <h5 style="color:var(--primary-light);margin-bottom:0.8rem;">
+                                <i class="fas fa-map-marker-alt me-2"></i>Delivery Address
+                            </h5>
+                            <p style="color:var(--text-light);font-size:0.88rem;line-height:1.6;"
+                               th:text="${order.deliveryAddress.getFullAddress()}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: payment summary -->
+            <div class="col-lg-4">
+                <div class="order-summary mb-3">
+                    <h5 style="color:var(--primary-light);margin-bottom:1rem;">
+                        <i class="fas fa-receipt me-2"></i>Order Summary
+                    </h5>
+                    <div class="summary-row"><span>Subtotal</span><span th:text="'₹' + ${order.subtotal}"></span></div>
+                    <div class="summary-row"><span>Delivery</span><span th:text="'₹' + ${order.deliveryCharge}"></span></div>
+                    <div class="summary-row"><span>GST</span><span th:text="'₹' + ${order.taxAmount}"></span></div>
+                    <div class="summary-row" th:if="${order.discountAmount.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                        <span>Discount</span>
+                        <span style="color:var(--success);" th:text="'-₹' + ${order.discountAmount}"></span>
+                    </div>
+                    <div class="summary-row summary-total">
+                        <span>Total</span>
+                        <span th:text="'₹' + ${order.totalAmount}"></span>
+                    </div>
+                </div>
+
+                <div class="sl-card mb-3">
+                    <h5 style="color:var(--primary-light);margin-bottom:0.8rem;">
+                        <i class="fas fa-credit-card me-2"></i>Payment
+                    </h5>
+                    <div class="summary-row">
+                        <span>Status</span>
+                        <span th:if="${order.paymentStatus.name() == 'PAID'}"
+                              style="color:var(--success);font-weight:700;">Paid ✓</span>
+                        <span th:unless="${order.paymentStatus.name() == 'PAID'}"
+                              style="color:#ffc107;" th:text="${order.paymentStatus}"></span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Order Date</span>
+                        <span th:text="${#temporals.format(order.createdAt,'dd MMM yyyy, hh:mm a')}"></span>
+                    </div>
+                    <div class="summary-row" th:if="${order.estimatedDelivery != null}">
+                        <span>Est. Delivery</span>
+                        <span th:text="${#temporals.format(order.estimatedDelivery,'dd MMM yyyy, hh:mm a')}"></span>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="sl-card" th:if="${order.notes != null and !#strings.isEmpty(order.notes)}">
+                    <h5 style="color:var(--primary-light);margin-bottom:0.6rem;">
+                        <i class="fas fa-sticky-note me-2"></i>Customer Notes
+                    </h5>
+                    <p style="color:var(--text-muted);font-size:0.88rem;" th:text="${order.notes}"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

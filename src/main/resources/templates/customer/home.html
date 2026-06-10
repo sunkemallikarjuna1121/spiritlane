@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head th:replace="~{fragments :: head('Home')}"></head>
+<body>
+
+<div th:replace="~{fragments :: toastContainer}"></div>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<!-- ─── Hero Banner ─── -->
+<section class="hero-banner">
+    <div class="container position-relative" style="z-index:2;">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <p style="color:var(--accent);font-weight:700;font-size:0.9rem;letter-spacing:2px;text-transform:uppercase;">
+                    🍾 Premium Home Delivery
+                </p>
+                <h1 class="hero-title">
+                    Finest Spirits<br/>
+                    <span class="highlight">Delivered to<br/>Your Doorstep</span>
+                </h1>
+                <p class="hero-subtitle mt-3">
+                    Browse thousands of premium beers, wines, whiskeys, and more.
+                    Order in minutes, delivered in hours. Responsibly.
+                </p>
+                <div class="d-flex gap-3 mt-4 flex-wrap">
+                    <a th:href="@{/products/browse}" class="btn-primary-sl px-4 py-3">
+                        <i class="fas fa-search me-2"></i>Shop Now
+                    </a>
+                    <a th:href="@{/auth/register}" class="btn-outline-sl px-4 py-3"
+                       sec:authorize="isAnonymous()">
+                        <i class="fas fa-user-plus me-2"></i>Join Free
+                    </a>
+                </div>
+                <!-- Quick stats -->
+                <div class="d-flex gap-4 mt-4 flex-wrap">
+                    <div>
+                        <div style="font-size:1.5rem;font-weight:700;color:var(--primary-light)">500+</div>
+                        <div style="font-size:0.78rem;color:var(--text-muted)">Premium Spirits</div>
+                    </div>
+                    <div style="color:var(--border-color)">|</div>
+                    <div>
+                        <div style="font-size:1.5rem;font-weight:700;color:var(--primary-light)">50+</div>
+                        <div style="font-size:0.78rem;color:var(--text-muted)">Partner Shops</div>
+                    </div>
+                    <div style="color:var(--border-color)">|</div>
+                    <div>
+                        <div style="font-size:1.5rem;font-weight:700;color:var(--primary-light)">2hr</div>
+                        <div style="font-size:0.78rem;color:var(--text-muted)">Delivery</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center d-none d-lg-block">
+                <div style="font-size:12rem;line-height:1;filter:drop-shadow(0 0 40px rgba(200,134,10,0.4));">
+                    🥃
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ─── Categories ─── -->
+<section class="container mt-5">
+    <h2 class="section-title">Shop by Category</h2>
+    <div class="d-flex gap-2 flex-wrap">
+        <a th:href="@{/products/browse}" class="category-chip active">
+            <i class="fas fa-th-large"></i> All
+        </a>
+        <a th:each="cat : ${categories}"
+           th:href="@{/products/browse(category=${cat.id})}"
+           class="category-chip">
+            <i th:class="${cat.iconClass}"></i>
+            <span th:text="${cat.name}"></span>
+        </a>
+    </div>
+</section>
+
+<!-- ─── Featured Products ─── -->
+<section class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="section-title mb-0">Featured Spirits</h2>
+        <a th:href="@{/products/browse}" class="btn-outline-sl px-3 py-2" style="font-size:0.85rem;">
+            View All <i class="fas fa-arrow-right ms-1"></i>
+        </a>
+    </div>
+    <div class="row g-3">
+        <div th:each="inv : ${latestProducts}" class="col-6 col-md-4 col-lg-3 col-xl-2-4">
+            <div class="product-card h-100">
+                <!-- Discount badge -->
+                <div th:if="${inv.discountPct != null and inv.discountPct.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                     class="product-badge"
+                     th:text="${#numbers.formatDecimal(inv.discountPct,1,0) + '% OFF'}"></div>
+                <!-- Imported badge -->
+                <div th:if="${inv.product.isImported}" class="product-badge badge-imported">
+                    <i class="fas fa-globe-americas me-1"></i>Imported
+                </div>
+
+                <a th:href="@{/products/detail/{id}(id=${inv.id})}">
+                    <div class="product-img-wrap">
+                        <img th:src="${inv.product.getPrimaryImageUrl()}"
+                             th:alt="${inv.product.name}"
+                             onerror="this.src='/images/product-placeholder.png'"/>
+                    </div>
+                </a>
+
+                <div class="product-body">
+                    <p class="product-meta"
+                       th:text="${inv.product.brand?.name} + ' · ' + ${inv.product.volumeMl} + 'ml'"></p>
+                    <a th:href="@{/products/detail/{id}(id=${inv.id})}" class="text-decoration-none">
+                        <p class="product-name" th:text="${inv.product.name}"></p>
+                    </a>
+                    <div class="product-price">
+                        <span class="price-current" th:text="'₹' + ${inv.sellingPrice}"></span>
+                        <span class="price-mrp" th:if="${inv.mrp.compareTo(inv.sellingPrice) > 0}"
+                              th:text="'₹' + ${inv.mrp}"></span>
+                        <span class="price-discount"
+                              th:if="${inv.discountPct != null and inv.discountPct.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                              th:text="${#numbers.formatDecimal(inv.discountPct,1,0) + '% OFF'}"></span>
+                    </div>
+                    <!-- ABV info -->
+                    <p class="product-meta" th:if="${inv.product.alcoholContent != null}"
+                       th:text="'ABV: ' + ${inv.product.alcoholContent} + '%'"></p>
+
+                    <button th:if="${inv.isInStock()}"
+                            class="btn-add-cart"
+                            th:data-inventory-id="${inv.id}"
+                            onclick="addToCart(this)"
+                            sec:authorize="hasRole('CUSTOMER')">
+                        <i class="fas fa-cart-plus me-1"></i>Add to Cart
+                    </button>
+                    <a th:if="${!inv.isInStock()}"
+                       class="btn-add-cart" style="background:#444;color:#888;cursor:not-allowed;">
+                        Out of Stock
+                    </a>
+                    <a th:if="${!#authorization.expression('isAuthenticated()')}"
+                       th:href="@{/auth/login}"
+                       class="btn-add-cart">
+                        <i class="fas fa-sign-in-alt me-1"></i>Login to Buy
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- Empty state -->
+        <div th:if="${#lists.isEmpty(latestProducts)}" class="col-12 text-center py-5">
+            <div style="font-size:4rem;">🍶</div>
+            <p class="text-muted-gold mt-2">Products coming soon. Check back later!</p>
+        </div>
+    </div>
+</section>
+
+<!-- ─── Why SpiritLane ─── -->
+<section class="container mt-6" style="margin-top:5rem;">
+    <h2 class="section-title centered">Why SpiritLane?</h2>
+    <div class="row g-4 mt-2">
+        <div class="col-md-3 col-sm-6 text-center">
+            <div class="sl-card p-3 text-center">
+                <div style="font-size:2.5rem;margin-bottom:0.8rem;">🔐</div>
+                <h5>Verified 18+</h5>
+                <p style="color:var(--text-muted);font-size:0.85rem;">Age verification at every step. We sell responsibly.</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 text-center">
+            <div class="sl-card p-3 text-center">
+                <div style="font-size:2.5rem;margin-bottom:0.8rem;">⚡</div>
+                <h5>Fast Delivery</h5>
+                <p style="color:var(--text-muted);font-size:0.85rem;">Order now, get it in under 2 hours at your doorstep.</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 text-center">
+            <div class="sl-card p-3 text-center">
+                <div style="font-size:2.5rem;margin-bottom:0.8rem;">💳</div>
+                <h5>Secure Payments</h5>
+                <p style="color:var(--text-muted);font-size:0.85rem;">100% online payments via Razorpay. No cash, no risk.</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 text-center">
+            <div class="sl-card p-3 text-center">
+                <div style="font-size:2.5rem;margin-bottom:0.8rem;">🏪</div>
+                <h5>Local Shops</h5>
+                <p style="color:var(--text-muted);font-size:0.85rem;">Sourced from your nearest licensed liquor stores.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer th:replace="~{fragments :: footer}"></footer>
+<div th:replace="~{fragments :: scripts}"></div>
+<script th:src="@{/js/main.js}"></script>
+<script>
+    // Load cart count on page load
+    $(document).ready(function() {
+        updateCartCount();
+    });
+</script>
+</body>
+</html>

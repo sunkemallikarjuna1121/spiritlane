@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head th:replace="~{fragments :: head('My Cart')}"></head>
+<body>
+<div th:replace="~{fragments :: toastContainer}"></div>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="container py-4">
+    <h2 class="section-title"><i class="fas fa-shopping-cart me-2"></i>My Cart</h2>
+    <div th:replace="~{fragments :: alerts}"></div>
+
+    <!-- ─── Empty Cart ─── -->
+    <div th:if="${cart.items == null or #lists.isEmpty(cart.items)}" class="text-center py-5">
+        <div style="font-size:6rem;">🛒</div>
+        <h4 style="color:var(--text-muted);" class="mt-3">Your cart is empty</h4>
+        <p style="color:var(--text-muted);">Browse our spirits and add something great!</p>
+        <a th:href="@{/products/browse}" class="btn-primary-sl mt-3 px-4 py-3">
+            <i class="fas fa-store me-2"></i>Browse Spirits
+        </a>
+    </div>
+
+    <!-- ─── Cart with Items ─── -->
+    <div th:unless="${cart.items == null or #lists.isEmpty(cart.items)}" class="row g-4">
+
+        <!-- Cart Items -->
+        <div class="col-lg-8">
+            <!-- Shop info banner -->
+            <div class="sl-alert sl-alert-info mb-3" th:if="${cart.shop != null}">
+                <i class="fas fa-store me-2"></i>
+                Items from: <strong th:text="${cart.shop.shopName}"></strong>
+                &nbsp;|&nbsp;
+                <a th:href="@{/cart/clear}" onclick="return confirm('Clear cart?')"
+                   style="color:#ff6b6b;font-size:0.85rem;">
+                    <i class="fas fa-trash me-1"></i>Clear Cart
+                </a>
+            </div>
+
+            <!-- Items -->
+            <div id="cartItemsContainer">
+                <div th:each="item : ${cart.items}" class="cart-item-row" th:id="'cart-item-' + ${item.inventory.id}">
+                    <img class="cart-item-img"
+                         th:src="${item.inventory.product.getPrimaryImageUrl()}"
+                         th:alt="${item.inventory.product.name}"
+                         onerror="this.src='/images/product-placeholder.png'"/>
+
+                    <div class="flex-grow-1">
+                        <h6 style="color:var(--text-light);margin-bottom:0.2rem;"
+                            th:text="${item.inventory.product.name}"></h6>
+                        <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:0.3rem;"
+                           th:text="${item.inventory.product.brand != null ? item.inventory.product.brand.name : ''} + ' · ' + ${item.inventory.product.volumeMl != null ? item.inventory.product.volumeMl + 'ml' : ''}"></p>
+                        <p style="color:var(--primary-light);font-size:0.9rem;font-weight:600;"
+                           th:text="'₹' + ${item.unitPrice} + ' each'"></p>
+                    </div>
+
+                    <!-- Quantity control -->
+                    <div class="qty-control">
+                        <button type="button"
+                                th:onclick="'updateQty(' + ${item.inventory.id} + ', ' + ${item.quantity - 1} + ')'">−</button>
+                        <input type="number" th:value="${item.quantity}" readonly
+                               th:id="'qty-' + ${item.inventory.id}"/>
+                        <button type="button"
+                                th:onclick="'updateQty(' + ${item.inventory.id} + ', ' + ${item.quantity + 1} + ')'">+</button>
+                    </div>
+
+                    <!-- Item total -->
+                    <div class="text-end" style="min-width:80px;">
+                        <div style="font-weight:700;color:var(--primary-light);font-size:1rem;"
+                             th:id="'total-' + ${item.inventory.id}"
+                             th:text="'₹' + ${item.getTotalPrice()}"></div>
+                        <button class="btn-link mt-1"
+                                style="background:none;border:none;color:#ff6b6b;font-size:0.8rem;cursor:pointer;padding:0;"
+                                th:onclick="'removeItem(' + ${item.inventory.id} + ')'">
+                            <i class="fas fa-trash-alt me-1"></i>Remove
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Continue shopping -->
+            <a th:href="@{/products/browse}" class="btn-outline-sl mt-3 px-3 py-2" style="font-size:0.88rem;">
+                <i class="fas fa-arrow-left me-1"></i>Continue Shopping
+            </a>
+        </div>
+
+        <!-- ─── Order Summary ─── -->
+        <div class="col-lg-4">
+            <div class="order-summary">
+                <h5 style="color:var(--primary-light);margin-bottom:1.2rem;font-size:1.1rem;">
+                    <i class="fas fa-receipt me-2"></i>Order Summary
+                </h5>
+
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span id="cartSubtotal" th:text="'₹' + ${cart.getSubtotal()}"></span>
+                </div>
+                <div class="summary-row">
+                    <span>Delivery</span>
+                    <span id="deliveryFee">
+                        <span th:if="${cart.getSubtotal().compareTo(T(java.math.BigDecimal).valueOf(500)) >= 0}"
+                              style="color:var(--success);">FREE</span>
+                        <span th:unless="${cart.getSubtotal().compareTo(T(java.math.BigDecimal).valueOf(500)) >= 0}">₹40.00</span>
+                    </span>
+                </div>
+                <div class="summary-row">
+                    <span>GST (18%)</span>
+                    <span id="gstAmt">Calculated at checkout</span>
+                </div>
+                <div class="summary-row summary-total">
+                    <span>Estimated Total</span>
+                    <span id="cartTotal" th:text="'₹' + ${cart.getSubtotal()}"></span>
+                </div>
+
+                <div class="mt-3">
+                    <!-- Coupon input -->
+                    <div class="d-flex gap-2 mb-3">
+                        <input type="text" id="couponInput" class="sl-form-control"
+                               placeholder="Coupon code"/>
+                        <button onclick="applyCoupon()" class="btn-outline-sl px-3" style="white-space:nowrap;">
+                            Apply
+                        </button>
+                    </div>
+                    <div id="couponMsg" style="font-size:0.82rem;"></div>
+                </div>
+
+                <a th:href="@{/checkout}" class="btn-primary-sl w-100 py-3 mt-2 text-center"
+                   style="display:block;font-size:1rem;">
+                    <i class="fas fa-lock me-2"></i>Proceed to Checkout
+                </a>
+
+                <!-- Payment note -->
+                <div class="text-center mt-3" style="font-size:0.78rem;color:var(--text-muted);">
+                    <i class="fas fa-shield-alt me-1" style="color:var(--primary)"></i>
+                    Secure online payment only &nbsp;|&nbsp;
+                    <i class="fas fa-times me-1" style="color:var(--danger)"></i>No Cash on Delivery
+                </div>
+
+                <!-- Accepted payments -->
+                <div class="d-flex justify-content-center gap-2 mt-2 flex-wrap">
+                    <span style="font-size:1.4rem;" title="UPI">💳</span>
+                    <span style="font-size:1.4rem;" title="NetBanking">🏦</span>
+                    <span style="font-size:0.75rem;color:var(--text-muted);align-self:center;">
+                        UPI · Cards · Net Banking
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments :: footer}"></footer>
+<div th:replace="~{fragments :: scripts}"></div>
+<script th:src="@{/js/main.js}"></script>
+<script>
+    function updateQty(inventoryId, newQty) {
+        var csrf = $('meta[name="_csrf"]').attr('content');
+        $.ajax({
+            url: '/cart/update',
+            method: 'POST',
+            data: { inventoryId: inventoryId, quantity: newQty, _csrf: csrf },
+            success: function(resp) {
+                if (resp.success) {
+                    if (newQty <= 0) {
+                        $('#cart-item-' + inventoryId).fadeOut(300, function() { $(this).remove(); });
+                    } else {
+                        $('#qty-' + inventoryId).val(newQty);
+                    }
+                    updateCartCount();
+                    location.reload();
+                } else {
+                    showToast(resp.message, 'error');
+                }
+            }
+        });
+    }
+
+    function removeItem(inventoryId) {
+        var csrf = $('meta[name="_csrf"]').attr('content');
+        $.ajax({
+            url: '/cart/remove',
+            method: 'POST',
+            data: { inventoryId: inventoryId, _csrf: csrf },
+            success: function(resp) {
+                if (resp.success) {
+                    $('#cart-item-' + inventoryId).fadeOut(300, function() {
+                        $(this).remove();
+                        updateCartCount();
+                        location.reload();
+                    });
+                } else {
+                    showToast(resp.message, 'error');
+                }
+            }
+        });
+    }
+
+    function applyCoupon() {
+        var code = $('#couponInput').val().trim();
+        if (!code) { showToast('Please enter a coupon code', 'error'); return; }
+        $('#couponMsg').html('<span style="color:var(--text-muted)">Coupon will be applied at checkout.</span>');
+    }
+
+    $(document).ready(function() { updateCartCount(); });
+</script>
+</body>
+</html>

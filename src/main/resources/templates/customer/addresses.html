@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('My Addresses')}"></head>
+<body>
+<div th:replace="~{fragments :: toastContainer}"></div>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h2 class="section-title mb-0"><i class="fas fa-map-marker-alt me-2"></i>My Addresses</h2>
+        <button class="btn-primary-sl px-3 py-2" style="font-size:0.9rem;"
+                onclick="document.getElementById('addAddressModal').style.display='flex'">
+            <i class="fas fa-plus me-2"></i>Add New Address
+        </button>
+    </div>
+
+    <div th:replace="~{fragments :: alerts}"></div>
+
+    <!-- Address Cards -->
+    <div class="row g-3">
+        <div th:each="addr : ${addresses}" class="col-md-6 col-lg-4">
+            <div class="sl-card h-100"
+                 th:style="${addr.isDefault} ? 'border-color:var(--primary);' : ''">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <!-- Icon by type -->
+                        <i th:if="${addr.addressType.name() == 'HOME'}"
+                           class="fas fa-home" style="color:var(--primary-light);"></i>
+                        <i th:if="${addr.addressType.name() == 'OFFICE'}"
+                           class="fas fa-briefcase" style="color:var(--primary-light);"></i>
+                        <i th:if="${addr.addressType.name() == 'OTHER'}"
+                           class="fas fa-map-pin" style="color:var(--primary-light);"></i>
+                        <span style="font-weight:700;color:var(--text-light);"
+                              th:text="${addr.addressType}"></span>
+                    </div>
+                    <span th:if="${addr.isDefault}"
+                          style="font-size:0.72rem;background:rgba(200,134,10,0.2);color:var(--primary-light);padding:2px 10px;border-radius:20px;font-weight:700;">
+                        Default
+                    </span>
+                </div>
+
+                <p style="color:var(--text-light);font-size:0.9rem;line-height:1.6;margin-bottom:1rem;"
+                   th:text="${addr.getFullAddress()}"></p>
+
+                <div class="d-flex gap-2 flex-wrap mt-auto">
+                    <!-- Set Default -->
+                    <form th:if="${!addr.isDefault}"
+                          th:action="@{/customer/addresses/{id}/set-default(id=${addr.id})}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit"
+                                style="background:rgba(200,134,10,0.15);color:var(--primary-light);border:1px solid rgba(200,134,10,0.3);border-radius:var(--radius-sm);padding:0.3rem 0.7rem;cursor:pointer;font-size:0.78rem;">
+                            <i class="fas fa-star me-1"></i>Set Default
+                        </button>
+                    </form>
+                    <!-- Delete -->
+                    <form th:action="@{/customer/addresses/{id}/delete(id=${addr.id})}" method="post"
+                          onsubmit="return confirm('Remove this address?')">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit"
+                                style="background:rgba(220,53,69,0.15);color:#ff6b6b;border:1px solid rgba(220,53,69,0.3);border-radius:var(--radius-sm);padding:0.3rem 0.7rem;cursor:pointer;font-size:0.78rem;">
+                            <i class="fas fa-trash me-1"></i>Remove
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty state -->
+        <div th:if="${#lists.isEmpty(addresses)}" class="col-12 text-center py-5">
+            <div style="font-size:4rem;">📍</div>
+            <h5 style="color:var(--text-muted);" class="mt-3">No saved addresses</h5>
+            <p style="color:var(--text-muted);">Add a delivery address to place orders.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ─── Add Address Modal ─── -->
+<div id="addAddressModal"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:2000;align-items:center;justify-content:center;padding:1rem;">
+    <div style="background:var(--dark-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:2rem;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;position:relative;">
+        <button onclick="document.getElementById('addAddressModal').style.display='none'"
+                style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;">
+            <i class="fas fa-times"></i>
+        </button>
+
+        <h4 style="color:var(--primary-light);margin-bottom:1.5rem;">
+            <i class="fas fa-plus-circle me-2"></i>Add New Address
+        </h4>
+
+        <form th:action="@{/customer/addresses/add}" th:object="${addressDto}" method="post" novalidate>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="sl-form-group">
+                <label class="sl-form-label">Address Type</label>
+                <select th:field="*{addressType}" class="sl-form-control">
+                    <option value="HOME">🏠 Home</option>
+                    <option value="OFFICE">🏢 Office</option>
+                    <option value="OTHER">📍 Other</option>
+                </select>
+            </div>
+
+            <div class="sl-form-group">
+                <label class="sl-form-label">Address Line 1 *</label>
+                <input type="text" th:field="*{addressLine1}"
+                       th:class="'sl-form-control' + (${#fields.hasErrors('addressLine1')} ? ' is-invalid' : '')"
+                       placeholder="Flat No, Building, Street" required/>
+                <span class="invalid-feedback" th:if="${#fields.hasErrors('addressLine1')}" th:errors="*{addressLine1}"></span>
+            </div>
+
+            <div class="sl-form-group">
+                <label class="sl-form-label">Address Line 2</label>
+                <input type="text" th:field="*{addressLine2}" class="sl-form-control"
+                       placeholder="Area, Colony (optional)"/>
+            </div>
+
+            <div class="sl-form-group">
+                <label class="sl-form-label">Landmark</label>
+                <input type="text" th:field="*{landmark}" class="sl-form-control"
+                       placeholder="Near temple, park etc."/>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="sl-form-group">
+                        <label class="sl-form-label">City *</label>
+                        <input type="text" th:field="*{city}" class="sl-form-control"
+                               placeholder="City" required/>
+                        <span class="invalid-feedback" th:if="${#fields.hasErrors('city')}" th:errors="*{city}"></span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="sl-form-group">
+                        <label class="sl-form-label">State *</label>
+                        <select th:field="*{state}" class="sl-form-control" required>
+                            <option value="">Select State</option>
+                            <option value="Andhra Pradesh">Andhra Pradesh</option>
+                            <option value="Delhi">Delhi</option>
+                            <option value="Goa">Goa</option>
+                            <option value="Gujarat">Gujarat</option>
+                            <option value="Karnataka">Karnataka</option>
+                            <option value="Kerala">Kerala</option>
+                            <option value="Maharashtra">Maharashtra</option>
+                            <option value="Punjab">Punjab</option>
+                            <option value="Rajasthan">Rajasthan</option>
+                            <option value="Tamil Nadu">Tamil Nadu</option>
+                            <option value="Telangana">Telangana</option>
+                            <option value="Uttar Pradesh">Uttar Pradesh</option>
+                            <option value="West Bengal">West Bengal</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="sl-form-group">
+                        <label class="sl-form-label">Pincode *</label>
+                        <input type="text" th:field="*{pincode}" class="sl-form-control"
+                               placeholder="6-digit" maxlength="6"
+                               oninput="validatePincode(this)" required/>
+                        <span class="invalid-feedback" th:if="${#fields.hasErrors('pincode')}" th:errors="*{pincode}"></span>
+                    </div>
+                </div>
+            </div>
+
+            <label class="filter-checkbox mt-2">
+                <input type="checkbox" th:field="*{isDefault}"/>
+                <span style="font-size:0.85rem;color:var(--text-muted);">Set as default address</span>
+            </label>
+
+            <div class="d-flex gap-3 mt-3">
+                <button type="submit" class="btn-primary-sl px-4 py-2">
+                    <i class="fas fa-save me-2"></i>Save Address
+                </button>
+                <button type="button" class="btn-outline-sl px-4 py-2"
+                        onclick="document.getElementById('addAddressModal').style.display='none'">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<footer th:replace="~{fragments :: footer}"></footer>
+<div th:replace="~{fragments :: scripts}"></div>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

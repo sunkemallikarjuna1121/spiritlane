@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('My Orders')}"></head>
+<body>
+<div th:replace="~{fragments :: toastContainer}"></div>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="container py-4">
+    <h2 class="section-title"><i class="fas fa-box me-2"></i>My Orders</h2>
+    <div th:replace="~{fragments :: alerts}"></div>
+
+    <!-- Empty -->
+    <div th:if="${orders.totalElements == 0}" class="text-center py-5">
+        <div style="font-size:5rem;">📦</div>
+        <h4 style="color:var(--text-muted);" class="mt-3">No orders yet</h4>
+        <a th:href="@{/products/browse}" class="btn-primary-sl mt-3 px-4 py-2">Shop Now</a>
+    </div>
+
+    <!-- Orders table -->
+    <div th:unless="${orders.totalElements == 0}" class="table-container">
+        <div class="table-header">
+            <h3>Order History</h3>
+            <span style="color:var(--text-muted);font-size:0.85rem;"
+                  th:text="${orders.totalElements} + ' total orders'"></span>
+        </div>
+        <div style="overflow-x:auto;">
+            <table class="sl-table">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Date</th>
+                        <th>Shop</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Payment</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="order : ${orders.content}">
+                        <td>
+                            <span style="color:var(--primary-light);font-weight:700;font-size:0.85rem;"
+                                  th:text="${order.orderNumber}"></span>
+                        </td>
+                        <td style="font-size:0.85rem;color:var(--text-muted);"
+                            th:text="${#temporals.format(order.createdAt,'dd MMM yyyy')}"></td>
+                        <td style="font-size:0.85rem;" th:text="${order.shop.shopName}"></td>
+                        <td style="font-size:0.85rem;"
+                            th:text="${order.orderItems != null ? #lists.size(order.orderItems) : 0} + ' item(s)'"></td>
+                        <td style="font-weight:600;color:var(--primary-light);"
+                            th:text="'₹' + ${order.totalAmount}"></td>
+                        <td>
+                            <span class="status-badge"
+                                  th:classappend="${'status-' + #strings.toLowerCase(#strings.replace(order.orderStatus.name(), '_', '-'))}"
+                                  th:text="${order.orderStatus}"></span>
+                        </td>
+                        <td>
+                            <span th:if="${order.paymentStatus.name() == 'PAID'}"
+                                  style="color:var(--success);font-size:0.82rem;font-weight:600;">
+                                <i class="fas fa-check-circle me-1"></i>Paid
+                            </span>
+                            <span th:unless="${order.paymentStatus.name() == 'PAID'}"
+                                  style="color:#ffc107;font-size:0.82rem;">
+                                <i class="fas fa-clock me-1"></i>
+                                <span th:text="${order.paymentStatus}"></span>
+                            </span>
+                        </td>
+                        <td>
+                            <a th:href="@{/customer/orders/{num}(num=${order.orderNumber})}"
+                               class="btn-outline-sl px-2 py-1" style="font-size:0.78rem;">
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${orders.totalPages > 1}" class="sl-pagination p-3">
+            <a th:if="${!orders.first}"
+               th:href="@{/customer/orders(page=${orders.number - 1})}"
+               class="sl-page-btn"><i class="fas fa-chevron-left"></i></a>
+            <th:block th:each="i : ${#numbers.sequence(0, orders.totalPages - 1)}">
+                <a th:if="${i >= orders.number - 2 and i <= orders.number + 2}"
+                   th:href="@{/customer/orders(page=${i})}"
+                   class="sl-page-btn"
+                   th:classappend="${i == orders.number} ? ' active' : ''"
+                   th:text="${i + 1}"></a>
+            </th:block>
+            <a th:if="${!orders.last}"
+               th:href="@{/customer/orders(page=${orders.number + 1})}"
+               class="sl-page-btn"><i class="fas fa-chevron-right"></i></a>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments :: footer}"></footer>
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

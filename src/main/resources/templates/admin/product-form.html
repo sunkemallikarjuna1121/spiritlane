@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('Add Product')}"></head>
+<link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="sl-dashboard-wrapper">
+    <aside class="sl-sidebar">
+        <div class="sidebar-header">
+            <div style="font-family:var(--font-brand);font-size:1.2rem;color:var(--primary-light);">Spirit<span style="color:var(--accent);">Lane</span></div>
+            <div class="sidebar-role-badge">Admin Panel</div>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="nav-item"><a th:href="@{/admin/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt"></i>Dashboard</a></li>
+            <li class="nav-item"><a th:href="@{/admin/shops}" class="nav-link"><i class="fas fa-store"></i>Shops</a></li>
+            <li class="nav-item"><a th:href="@{/admin/customers}" class="nav-link"><i class="fas fa-users"></i>Customers</a></li>
+            <li class="nav-item"><a th:href="@{/admin/agents}" class="nav-link"><i class="fas fa-motorcycle"></i>Agents</a></li>
+            <li class="nav-item"><a th:href="@{/admin/orders}" class="nav-link"><i class="fas fa-box"></i>All Orders</a></li>
+            <li class="nav-item"><a th:href="@{/admin/products}" class="nav-link active"><i class="fas fa-wine-bottle"></i>Products</a></li>
+        </ul>
+    </aside>
+
+    <div class="sl-dashboard-content">
+        <div class="page-header">
+            <div>
+                <h1><i class="fas fa-plus-circle me-2"></i>Add New Product</h1>
+                <p class="page-subtitle">Add a product to the master catalog. Shop owners can then list it with their price.</p>
+            </div>
+            <a th:href="@{/admin/products}" class="btn-outline-sl px-3 py-2" style="font-size:0.85rem;">
+                <i class="fas fa-arrow-left me-1"></i>Back
+            </a>
+        </div>
+
+        <div th:replace="~{fragments :: alerts}"></div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-9">
+                <div class="sl-card">
+                    <form th:action="@{/admin/products/save}" th:object="${product}" method="post" novalidate>
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Product Name *</label>
+                                    <input type="text" th:field="*{name}" class="sl-form-control"
+                                           placeholder="e.g. Johnnie Walker Black Label 750ml" required/>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Category *</label>
+                                    <select th:field="*{category.id}" class="sl-form-control" required>
+                                        <option value="">-- Select Category --</option>
+                                        <option th:each="cat : ${categories}"
+                                                th:value="${cat.id}"
+                                                th:text="${cat.name}"></option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Brand</label>
+                                    <select th:field="*{brand.id}" class="sl-form-control">
+                                        <option value="">-- Select Brand --</option>
+                                        <option th:each="b : ${brands}"
+                                                th:value="${b.id}"
+                                                th:text="${b.name}"></option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Product Type *</label>
+                                    <select th:field="*{productType}" class="sl-form-control" required>
+                                        <option value="">-- Select Type --</option>
+                                        <option value="BEER">Beer</option>
+                                        <option value="WINE">Wine</option>
+                                        <option value="WHISKEY">Whiskey</option>
+                                        <option value="VODKA">Vodka</option>
+                                        <option value="RUM">Rum</option>
+                                        <option value="GIN">Gin</option>
+                                        <option value="TEQUILA">Tequila</option>
+                                        <option value="BRANDY">Brandy</option>
+                                        <option value="COCKTAIL">Cocktail</option>
+                                        <option value="OTHER">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Volume (ml)</label>
+                                    <input type="number" th:field="*{volumeMl}" class="sl-form-control"
+                                           placeholder="e.g. 750" min="1"/>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">ABV % (Alcohol)</label>
+                                    <input type="number" th:field="*{alcoholContent}" class="sl-form-control"
+                                           placeholder="e.g. 40.0" step="0.1" min="0" max="100"/>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Country of Origin</label>
+                                    <input type="text" th:field="*{countryOfOrigin}" class="sl-form-control"
+                                           placeholder="e.g. Scotland, India"/>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Imported?</label>
+                                    <select th:field="*{isImported}" class="sl-form-control">
+                                        <option value="false">No (Domestic)</option>
+                                        <option value="true">Yes (Imported)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Active?</label>
+                                    <select th:field="*{isActive}" class="sl-form-control">
+                                        <option value="true">Yes</option>
+                                        <option value="false">No</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Tags (comma-separated)</label>
+                                    <input type="text" th:field="*{tags}" class="sl-form-control"
+                                           placeholder="e.g. premium, aged, single-malt"/>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="sl-form-group">
+                                    <label class="sl-form-label">Description</label>
+                                    <textarea th:field="*{description}" class="sl-form-control" rows="4"
+                                              placeholder="Product description, tasting notes..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3 mt-4">
+                            <button type="submit" class="btn-primary-sl px-4 py-2">
+                                <i class="fas fa-save me-2"></i>Save Product
+                            </button>
+                            <a th:href="@{/admin/products}" class="btn-outline-sl px-4 py-2">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('Shop Dashboard')}"></head>
+<link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="sl-dashboard-wrapper">
+    <!-- Sidebar -->
+    <aside class="sl-sidebar">
+        <div class="sidebar-header">
+            <div style="font-family:var(--font-brand);font-size:1.2rem;color:var(--primary-light);">Spirit<span style="color:var(--accent);">Lane</span></div>
+            <div class="sidebar-role-badge">Shop Owner</div>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="sidebar-section-label">Overview</li>
+            <li class="nav-item">
+                <a th:href="@{/shop/dashboard}" class="nav-link active">
+                    <i class="fas fa-tachometer-alt"></i>Dashboard
+                </a>
+            </li>
+            <li class="sidebar-section-label">Manage</li>
+            <li class="nav-item">
+                <a th:href="@{/shop/inventory}" class="nav-link">
+                    <i class="fas fa-boxes"></i>Inventory
+                </a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/shop/orders}" class="nav-link">
+                    <i class="fas fa-box"></i>Orders
+                </a>
+            </li>
+            <li class="sidebar-section-label">Settings</li>
+            <li class="nav-item">
+                <form th:action="@{/shop/toggle-status}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="nav-link w-100"
+                            style="background:none;border:none;text-align:left;cursor:pointer;">
+                        <i class="fas fa-power-off"></i>
+                        <span th:text="${shop != null and shop.isOpen} ? 'Mark Closed' : 'Mark Open'"></span>
+                    </button>
+                </form>
+            </li>
+            <li class="nav-item">
+                <form th:action="@{/auth/logout}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="nav-link w-100"
+                            style="background:none;border:none;text-align:left;cursor:pointer;">
+                        <i class="fas fa-sign-out-alt"></i>Logout
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="sl-dashboard-content">
+
+        <!-- No shop registered yet -->
+        <div th:if="${noShop}" class="text-center py-5">
+            <div style="font-size:5rem;">🏪</div>
+            <h3 style="color:var(--primary-light);" class="mt-3">Register Your Shop</h3>
+            <p style="color:var(--text-muted);">You haven't registered a shop yet. Register now to start selling.</p>
+            <a th:href="@{/shop/register}" class="btn-primary-sl px-4 py-3 mt-2">
+                <i class="fas fa-plus me-2"></i>Register Shop
+            </a>
+        </div>
+
+        <!-- Shop dashboard content -->
+        <div th:unless="${noShop}">
+            <div class="page-header">
+                <div>
+                    <h1 th:text="${shop.shopName}">Shop Name</h1>
+                    <p class="page-subtitle">
+                        <span th:if="${shop.isApproved}" style="color:var(--success);">
+                            <i class="fas fa-check-circle me-1"></i>Approved
+                        </span>
+                        <span th:unless="${shop.isApproved}" style="color:var(--warning);">
+                            <i class="fas fa-clock me-1"></i>Pending Approval
+                        </span>
+                        &nbsp;|&nbsp;
+                        <span th:if="${shop.isOpen}" style="color:var(--success);">
+                            <i class="fas fa-door-open me-1"></i>Currently Open
+                        </span>
+                        <span th:unless="${shop.isOpen}" style="color:var(--danger);">
+                            <i class="fas fa-door-closed me-1"></i>Currently Closed
+                        </span>
+                    </p>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a th:href="@{/shop/inventory}" class="btn-outline-sl px-3 py-2" style="font-size:0.85rem;">
+                        <i class="fas fa-boxes me-1"></i>Manage Inventory
+                    </a>
+                    <a th:href="@{/shop/orders}" class="btn-primary-sl px-3 py-2" style="font-size:0.85rem;">
+                        <i class="fas fa-box me-1"></i>View Orders
+                    </a>
+                </div>
+            </div>
+
+            <div th:replace="~{fragments :: alerts}"></div>
+
+            <!-- Pending approval notice -->
+            <div th:unless="${shop.isApproved}" class="sl-alert sl-alert-warning mb-4">
+                <i class="fas fa-clock"></i>
+                Your shop is pending admin approval. You can set up inventory but orders won't be visible until approved.
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon gold"><i class="fas fa-box"></i></div>
+                    <div>
+                        <div class="stat-label">Total Orders</div>
+                        <div class="stat-value"
+                             th:text="${recentOrders != null ? recentOrders.totalElements : 0}">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
+                    <div>
+                        <div class="stat-label">Pending Orders</div>
+                        <div class="stat-value"
+                             th:text="${recentOrders != null ? recentOrders.content.?[orderStatus.name() == 'PENDING'].size() : 0}">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green"><i class="fas fa-boxes"></i></div>
+                    <div>
+                        <div class="stat-label">Products Listed</div>
+                        <div class="stat-value"
+                             th:text="${inventory != null ? #lists.size(inventory) : 0}">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="fas fa-star"></i></div>
+                    <div>
+                        <div class="stat-label">Shop Rating</div>
+                        <div class="stat-value" th:text="${shop.rating}">0.0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Orders Table -->
+            <div class="table-container mt-4">
+                <div class="table-header">
+                    <h3><i class="fas fa-clock me-2"></i>Recent Orders</h3>
+                    <a th:href="@{/shop/orders}" class="btn-outline-sl px-3 py-1" style="font-size:0.82rem;">View All</a>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="sl-table">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="order : ${recentOrders.content}">
+                                <td style="color:var(--primary-light);font-size:0.82rem;font-weight:700;"
+                                    th:text="${order.orderNumber}"></td>
+                                <td th:text="${order.customer.fullName}"></td>
+                                <td style="font-size:0.85rem;"
+                                    th:text="${order.orderItems != null ? #lists.size(order.orderItems) : 0} + ' item(s)'"></td>
+                                <td style="font-weight:600;color:var(--primary-light);"
+                                    th:text="'₹' + ${order.totalAmount}"></td>
+                                <td>
+                                    <span class="status-badge"
+                                          th:classappend="${'status-' + #strings.toLowerCase(#strings.replace(order.orderStatus.name(),'_','-'))}"
+                                          th:text="${order.orderStatus}"></span>
+                                </td>
+                                <td style="font-size:0.82rem;color:var(--text-muted);"
+                                    th:text="${#temporals.format(order.createdAt,'dd MMM yyyy')}"></td>
+                                <td>
+                                    <a th:href="@{/shop/orders/{id}(id=${order.id})}"
+                                       class="btn-outline-sl px-2 py-1" style="font-size:0.78rem;">Manage</a>
+                                </td>
+                            </tr>
+                            <tr th:if="${recentOrders == null or recentOrders.totalElements == 0}">
+                                <td colspan="7" class="text-center"
+                                    style="color:var(--text-muted);padding:2rem;">No orders yet</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

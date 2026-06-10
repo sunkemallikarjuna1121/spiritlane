@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('Admin Dashboard')}"></head>
+<link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="sl-dashboard-wrapper">
+    <!-- Sidebar -->
+    <aside class="sl-sidebar">
+        <div class="sidebar-header">
+            <div style="font-family:var(--font-brand);font-size:1.2rem;color:var(--primary-light);">Spirit<span style="color:var(--accent);">Lane</span></div>
+            <div class="sidebar-role-badge">Admin Panel</div>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="sidebar-section-label">Overview</li>
+            <li class="nav-item">
+                <a th:href="@{/admin/dashboard}" class="nav-link active">
+                    <i class="fas fa-tachometer-alt"></i>Dashboard
+                </a>
+            </li>
+            <li class="sidebar-section-label">Management</li>
+            <li class="nav-item">
+                <a th:href="@{/admin/shops}" class="nav-link">
+                    <i class="fas fa-store"></i>Shops
+                    <span class="badge" th:if="${pendingShops > 0}" th:text="${pendingShops}"></span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/admin/customers}" class="nav-link">
+                    <i class="fas fa-users"></i>Customers
+                </a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/admin/agents}" class="nav-link">
+                    <i class="fas fa-motorcycle"></i>Delivery Agents
+                </a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/admin/orders}" class="nav-link">
+                    <i class="fas fa-box"></i>All Orders
+                    <span class="badge" th:if="${pendingOrders > 0}" th:text="${pendingOrders}"></span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a th:href="@{/admin/products}" class="nav-link">
+                    <i class="fas fa-wine-bottle"></i>Products
+                </a>
+            </li>
+            <li class="sidebar-section-label">Account</li>
+            <li class="nav-item">
+                <form th:action="@{/auth/logout}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="nav-link w-100" style="background:none;border:none;text-align:left;cursor:pointer;">
+                        <i class="fas fa-sign-out-alt"></i>Logout
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="sl-dashboard-content">
+        <div class="page-header">
+            <div>
+                <h1>Dashboard</h1>
+                <p class="page-subtitle">Welcome back, Admin 👋</p>
+            </div>
+        </div>
+
+        <div th:replace="~{fragments :: alerts}"></div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon gold"><i class="fas fa-users"></i></div>
+                <div>
+                    <div class="stat-label">Total Customers</div>
+                    <div class="stat-value" th:text="${totalCustomers}">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange"><i class="fas fa-store"></i></div>
+                <div>
+                    <div class="stat-label">Partner Shops</div>
+                    <div class="stat-value" th:text="${totalShops}">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fas fa-motorcycle"></i></div>
+                <div>
+                    <div class="stat-label">Delivery Agents</div>
+                    <div class="stat-value" th:text="${totalAgents}">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="fas fa-box"></i></div>
+                <div>
+                    <div class="stat-label">Pending Orders</div>
+                    <div class="stat-value" th:text="${pendingOrders}">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Shop Approvals -->
+        <div th:if="${pendingShops > 0}" class="sl-alert sl-alert-warning mb-4">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span th:text="${pendingShops} + ' shop(s) awaiting approval.'"></span>
+            <a th:href="@{/admin/shops}" style="color:var(--primary-light);font-weight:700;margin-left:8px;">
+                Review Now <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="table-container">
+            <div class="table-header">
+                <h3><i class="fas fa-clock me-2"></i>Recent Orders</h3>
+                <a th:href="@{/admin/orders}" class="btn-outline-sl px-3 py-1" style="font-size:0.82rem;">View All</a>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="sl-table">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Customer</th>
+                            <th>Shop</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="order : ${recentOrders.content}">
+                            <td style="color:var(--primary-light);font-size:0.82rem;" th:text="${order.orderNumber}"></td>
+                            <td th:text="${order.customer.fullName}"></td>
+                            <td th:text="${order.shop.shopName}"></td>
+                            <td style="font-weight:600;" th:text="'₹' + ${order.totalAmount}"></td>
+                            <td>
+                                <span class="status-badge"
+                                      th:classappend="${'status-' + #strings.toLowerCase(#strings.replace(order.orderStatus.name(),'_','-'))}"
+                                      th:text="${order.orderStatus}"></span>
+                            </td>
+                            <td>
+                                <span th:if="${order.paymentStatus.name() == 'PAID'}" style="color:var(--success);font-size:0.82rem;">Paid</span>
+                                <span th:unless="${order.paymentStatus.name() == 'PAID'}" style="color:#ffc107;font-size:0.82rem;" th:text="${order.paymentStatus}"></span>
+                            </td>
+                            <td style="font-size:0.82rem;color:var(--text-muted);"
+                                th:text="${#temporals.format(order.createdAt,'dd MMM yyyy')}"></td>
+                        </tr>
+                        <tr th:if="${recentOrders.totalElements == 0}">
+                            <td colspan="7" class="text-center" style="color:var(--text-muted);padding:2rem;">No orders yet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

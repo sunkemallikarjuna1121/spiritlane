@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('Server Error')}"></head>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+<div class="container py-5 text-center">
+    <div class="sl-card mx-auto" style="max-width:520px;">
+        <div style="font-size:6rem;margin-bottom:1rem;">🥃</div>
+        <h1 style="font-size:4rem;color:var(--danger);margin-bottom:0;">500</h1>
+        <h3 style="color:var(--text-light);">Something Went Wrong</h3>
+        <p style="color:var(--text-muted);" th:text="${errorMessage} ?: 'An unexpected error occurred. Please try again.'"></p>
+        <div class="d-flex gap-3 justify-content-center mt-4 flex-wrap">
+            <a th:href="@{/home}" class="btn-primary-sl px-4 py-2">
+                <i class="fas fa-home me-2"></i>Go Home
+            </a>
+        </div>
+    </div>
+</div>
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

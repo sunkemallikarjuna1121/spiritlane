@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<!-- ============================================================
+     FRAGMENT: head
+     ============================================================ -->
+<head th:fragment="head(pageTitle)">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title th:text="${pageTitle} + ' | SpiritLane'">SpiritLane</title>
+
+    <!-- Bootstrap 5 -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <!-- jQuery UI CSS -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/base/jquery-ui.min.css"/>
+    <!-- SpiritLane Main CSS -->
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+</head>
+
+<!-- ============================================================
+     FRAGMENT: navbar (public)
+     ============================================================ -->
+<nav th:fragment="navbar" class="sl-navbar navbar navbar-expand-lg">
+    <div class="container-fluid px-4">
+
+        <!-- Brand -->
+        <a class="navbar-brand" th:href="@{/home}">
+            Spirit<span>Lane</span>
+        </a>
+
+        <!-- Toggler -->
+        <button class="navbar-toggler border-0" type="button"
+                data-bs-toggle="collapse" data-bs-target="#navbarMain">
+            <i class="fas fa-bars" style="color:var(--primary-light)"></i>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarMain">
+
+            <!-- Search -->
+            <div class="d-flex align-items-center ms-3 me-auto">
+                <form method="get" th:action="@{/products/browse}" class="d-flex">
+                    <input type="text" name="q" class="search-input"
+                           placeholder="Search whiskey, beer, wine..."
+                           th:value="${param.q}"/>
+                    <button type="submit" class="btn-search">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
+
+            <ul class="navbar-nav align-items-center gap-1">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/products/browse}">
+                        <i class="fas fa-store me-1"></i>Browse
+                    </a>
+                </li>
+
+                <!-- Logged out -->
+                <li class="nav-item" sec:authorize="isAnonymous()">
+                    <a class="nav-link" th:href="@{/auth/login}">Login</a>
+                </li>
+                <li class="nav-item" sec:authorize="isAnonymous()">
+                    <a class="btn-primary-sl ms-2" th:href="@{/auth/register}">Sign Up</a>
+                </li>
+
+                <!-- Logged in Customer -->
+                <li class="nav-item" sec:authorize="hasRole('CUSTOMER')">
+                    <a class="nav-link cart-badge" th:href="@{/cart}">
+                        <i class="fas fa-shopping-cart fa-lg"></i>
+                        <span class="badge" id="cartCountBadge">0</span>
+                    </a>
+                </li>
+
+                <!-- User dropdown -->
+                <li class="nav-item dropdown" sec:authorize="isAuthenticated()">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center gap-2"
+                       href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle fa-lg"></i>
+                        <span sec:authentication="name" class="d-none d-md-inline"></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end"
+                        style="background:var(--dark-card);border-color:var(--border-color);">
+                        <li sec:authorize="hasRole('CUSTOMER')">
+                            <a class="dropdown-item text-light" th:href="@{/customer/profile}">
+                                <i class="fas fa-user me-2"></i>My Profile
+                            </a>
+                        </li>
+                        <li sec:authorize="hasRole('CUSTOMER')">
+                            <a class="dropdown-item text-light" th:href="@{/customer/orders}">
+                                <i class="fas fa-box me-2"></i>My Orders
+                            </a>
+                        </li>
+                        <li sec:authorize="hasRole('ADMIN')">
+                            <a class="dropdown-item text-light" th:href="@{/admin/dashboard}">
+                                <i class="fas fa-tachometer-alt me-2"></i>Admin Panel
+                            </a>
+                        </li>
+                        <li sec:authorize="hasRole('SHOP_OWNER')">
+                            <a class="dropdown-item text-light" th:href="@{/shop/dashboard}">
+                                <i class="fas fa-store me-2"></i>Shop Dashboard
+                            </a>
+                        </li>
+                        <li sec:authorize="hasRole('DELIVERY_AGENT')">
+                            <a class="dropdown-item text-light" th:href="@{/delivery/dashboard}">
+                                <i class="fas fa-motorcycle me-2"></i>Delivery Panel
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider" style="border-color:var(--border-color)"/></li>
+                        <li>
+                            <form th:action="@{/auth/logout}" method="post">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- ============================================================
+     FRAGMENT: footer
+     ============================================================ -->
+<footer th:fragment="footer" class="sl-footer">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="footer-brand mb-2">Spirit<span>Lane</span></div>
+                <p>India's premium alcohol home delivery platform. Quality spirits, delivered responsibly to your doorstep.</p>
+                <div class="age-disclaimer mt-3">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    18+ only. Drink responsibly. Not for sale to minors.
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <h5>Quick Links</h5>
+                <ul>
+                    <li><a th:href="@{/products/browse}">Browse Spirits</a></li>
+                    <li><a th:href="@{/auth/register}">Create Account</a></li>
+                    <li><a th:href="@{/auth/register-shop}">Register Shop</a></li>
+                    <li><a th:href="@{/auth/register-agent}">Become Agent</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-2 col-md-4">
+                <h5>Categories</h5>
+                <ul>
+                    <li><a th:href="@{/products/browse(category=1)}">Beer</a></li>
+                    <li><a th:href="@{/products/browse(category=2)}">Wine</a></li>
+                    <li><a th:href="@{/products/browse(category=3)}">Whiskey</a></li>
+                    <li><a th:href="@{/products/browse(category=5)}">Rum</a></li>
+                </ul>
+            </div>
+            <div class="col-lg-4 col-md-4">
+                <h5>Legal & Safety</h5>
+                <p>Alcohol consumption is injurious to health. SpiritLane complies with all state excise regulations. We verify age at delivery.</p>
+                <p class="mt-2">
+                    <i class="fas fa-phone me-2" style="color:var(--primary)"></i>+91 98765 43210
+                </p>
+                <p>
+                    <i class="fas fa-envelope me-2" style="color:var(--primary)"></i>support@spiritlane.in
+                </p>
+            </div>
+        </div>
+        <hr class="footer-divider"/>
+        <div class="footer-bottom">
+            <p>&copy; 2025 SpiritLane. All rights reserved. |
+               <span style="color:var(--text-muted)">FSSAI Licensed</span> |
+               Drink Responsibly 🍺
+            </p>
+        </div>
+    </div>
+</footer>
+
+<!-- ============================================================
+     FRAGMENT: scripts
+     ============================================================ -->
+<div th:fragment="scripts">
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- jQuery UI -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
+    <!-- Bootstrap Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SpiritLane Main JS -->
+    <script th:src="@{/js/main.js}"></script>
+</div>
+
+<!-- ============================================================
+     FRAGMENT: alerts (flash messages)
+     ============================================================ -->
+<div th:fragment="alerts">
+    <div th:if="${successMsg}" class="sl-alert sl-alert-success">
+        <i class="fas fa-check-circle"></i>
+        <span th:text="${successMsg}"></span>
+    </div>
+    <div th:if="${errorMsg}" class="sl-alert sl-alert-error">
+        <i class="fas fa-times-circle"></i>
+        <span th:text="${errorMsg}"></span>
+    </div>
+    <div th:if="${infoMsg}" class="sl-alert sl-alert-info">
+        <i class="fas fa-info-circle"></i>
+        <span th:text="${infoMsg}"></span>
+    </div>
+</div>
+
+<!-- ============================================================
+     FRAGMENT: toast container
+     ============================================================ -->
+<div th:fragment="toastContainer" class="sl-toast-container" id="toastContainer"></div>
+
+</html>

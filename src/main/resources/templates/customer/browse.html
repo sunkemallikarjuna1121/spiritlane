@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security" lang="en">
+<head th:replace="~{fragments :: head('Browse Spirits')}"></head>
+<body>
+<div th:replace="~{fragments :: toastContainer}"></div>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="container-fluid px-4 mt-4">
+    <div class="row g-4">
+
+        <!-- ─── Filter Sidebar ─── -->
+        <div class="col-lg-2 col-md-3">
+            <div class="filter-panel">
+                <div class="filter-title">
+                    <i class="fas fa-sliders-h me-2"></i>Filters
+                </div>
+
+                <form id="filterForm" method="get" th:action="@{/products/browse}">
+
+                    <!-- Category -->
+                    <div class="filter-group">
+                        <div class="filter-group-label">Category</div>
+                        <div th:each="cat : ${categories}">
+                            <label class="filter-checkbox">
+                                <input type="radio" name="category"
+                                       th:value="${cat.id}"
+                                       th:checked="${selectedCat != null and selectedCat == cat.id}"
+                                       onchange="document.getElementById('filterForm').submit()"/>
+                                <span th:text="${cat.name}"></span>
+                            </label>
+                        </div>
+                        <label class="filter-checkbox mt-1">
+                            <input type="radio" name="category" value=""
+                                   th:checked="${selectedCat == null}"
+                                   onchange="document.getElementById('filterForm').submit()"/>
+                            <span>All Categories</span>
+                        </label>
+                    </div>
+
+                    <hr class="gold-divider" style="margin:0.8rem 0"/>
+
+                    <!-- Brand -->
+                    <div class="filter-group">
+                        <div class="filter-group-label">Brand</div>
+                        <div th:each="brand : ${brands}">
+                            <label class="filter-checkbox">
+                                <input type="radio" name="brand"
+                                       th:value="${brand.id}"
+                                       th:checked="${selectedBrand != null and selectedBrand == brand.id}"
+                                       onchange="document.getElementById('filterForm').submit()"/>
+                                <span th:text="${brand.name}"></span>
+                            </label>
+                        </div>
+                        <label class="filter-checkbox mt-1">
+                            <input type="radio" name="brand" value=""
+                                   th:checked="${selectedBrand == null}"
+                                   onchange="document.getElementById('filterForm').submit()"/>
+                            <span>All Brands</span>
+                        </label>
+                    </div>
+
+                    <hr class="gold-divider" style="margin:0.8rem 0"/>
+
+                    <!-- Sort -->
+                    <div class="filter-group">
+                        <div class="filter-group-label">Sort By</div>
+                        <select name="sortBy" class="sl-form-control"
+                                onchange="document.getElementById('filterForm').submit()">
+                            <option value="sellingPrice" th:selected="${sortBy == 'sellingPrice'}">Price</option>
+                            <option value="product.name" th:selected="${sortBy == 'product.name'}">Name</option>
+                            <option value="discountPct"  th:selected="${sortBy == 'discountPct'}">Discount</option>
+                        </select>
+                        <select name="sortDir" class="sl-form-control mt-2"
+                                onchange="document.getElementById('filterForm').submit()">
+                            <option value="asc"  th:selected="${sortDir == 'asc'}">Low to High</option>
+                            <option value="desc" th:selected="${sortDir == 'desc'}">High to Low</option>
+                        </select>
+                    </div>
+
+                    <!-- hidden fields to preserve state -->
+                    <input type="hidden" name="q" th:value="${query}"/>
+                    <input type="hidden" name="page" value="0"/>
+
+                    <a th:href="@{/products/browse}" class="btn-outline-sl w-100 mt-2"
+                       style="font-size:0.82rem;padding:0.4rem;">
+                        <i class="fas fa-times me-1"></i>Clear Filters
+                    </a>
+                </form>
+            </div>
+        </div>
+
+        <!-- ─── Products Grid ─── -->
+        <div class="col-lg-10 col-md-9">
+
+            <!-- Top bar -->
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <div>
+                    <h4 class="mb-0" style="color:var(--text-light);">
+                        <span th:if="${query != null and !#strings.isEmpty(query)}">
+                            Results for "<span th:text="${query}" style="color:var(--primary-light)"></span>"
+                        </span>
+                        <span th:unless="${query != null and !#strings.isEmpty(query)}">All Spirits</span>
+                    </h4>
+                    <small style="color:var(--text-muted);"
+                           th:text="${products.totalElements} + ' products found'"></small>
+                </div>
+                <!-- Mobile filter toggle -->
+                <button class="btn-outline-sl d-md-none" onclick="toggleMobileFilter()">
+                    <i class="fas fa-filter me-1"></i>Filter
+                </button>
+            </div>
+
+            <!-- Alert messages -->
+            <div th:replace="~{fragments :: alerts}"></div>
+
+            <!-- Product grid -->
+            <div class="row g-3" id="productGrid">
+                <div th:each="inv : ${products.content}" class="col-6 col-md-4 col-lg-3">
+                    <div class="product-card h-100">
+                        <!-- Badges -->
+                        <div th:if="${inv.discountPct != null and inv.discountPct.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                             class="product-badge"
+                             th:text="${#numbers.formatDecimal(inv.discountPct,1,0) + '% OFF'}"></div>
+                        <div th:if="${inv.product.isImported}" class="product-badge badge-imported">
+                            <i class="fas fa-globe-americas"></i>
+                        </div>
+
+                        <a th:href="@{/products/detail/{id}(id=${inv.id})}">
+                            <div class="product-img-wrap">
+                                <img th:src="${inv.product.getPrimaryImageUrl()}"
+                                     th:alt="${inv.product.name}"
+                                     onerror="this.src='/images/product-placeholder.png'"/>
+                            </div>
+                        </a>
+
+                        <div class="product-body">
+                            <p class="product-meta"
+                               th:text="${inv.product.category.name} + ' · ' + ${inv.product.volumeMl != null ? inv.product.volumeMl + 'ml' : ''}"></p>
+                            <a th:href="@{/products/detail/{id}(id=${inv.id})}" class="text-decoration-none">
+                                <p class="product-name" th:text="${inv.product.name}"></p>
+                            </a>
+                            <p class="product-meta" th:if="${inv.product.brand != null}"
+                               th:text="${inv.product.brand.name}"></p>
+                            <div class="product-price">
+                                <span class="price-current" th:text="'₹' + ${inv.sellingPrice}"></span>
+                                <span class="price-mrp"
+                                      th:if="${inv.mrp.compareTo(inv.sellingPrice) > 0}"
+                                      th:text="'₹' + ${inv.mrp}"></span>
+                            </div>
+                            <p class="product-meta" th:if="${inv.product.alcoholContent != null}"
+                               th:text="'ABV: ' + ${inv.product.alcoholContent} + '%'"></p>
+
+                            <!-- Out of Stock -->
+                            <div th:if="${!inv.isInStock()}"
+                                 class="btn-add-cart"
+                                 style="background:#333;color:#666;cursor:not-allowed;text-align:center;padding:0.5rem;border-radius:var(--radius-sm);">
+                                Out of Stock
+                            </div>
+
+                            <!-- Add to Cart (Customer) -->
+                            <button th:if="${inv.isInStock()}"
+                                    class="btn-add-cart"
+                                    th:data-inventory-id="${inv.id}"
+                                    onclick="addToCart(this)"
+                                    sec:authorize="hasRole('CUSTOMER')">
+                                <i class="fas fa-cart-plus me-1"></i>Add to Cart
+                            </button>
+
+                            <!-- Login prompt -->
+                            <a th:if="${inv.isInStock()}"
+                               th:href="@{/auth/login}"
+                               class="btn-add-cart"
+                               sec:authorize="isAnonymous()">
+                                <i class="fas fa-sign-in-alt me-1"></i>Login to Buy
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty state -->
+                <div th:if="${products.totalElements == 0}" class="col-12 text-center py-5">
+                    <div style="font-size:5rem;">🍶</div>
+                    <h4 style="color:var(--text-muted);" class="mt-3">No products found</h4>
+                    <p style="color:var(--text-muted);">Try different filters or search terms.</p>
+                    <a th:href="@{/products/browse}" class="btn-primary-sl mt-2">Clear All Filters</a>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div th:if="${products.totalPages > 1}" class="sl-pagination mt-4">
+                <!-- Prev -->
+                <a th:if="${!products.first}"
+                   th:href="@{/products/browse(page=${products.number - 1}, category=${selectedCat}, brand=${selectedBrand}, q=${query}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                   class="sl-page-btn">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+
+                <!-- Pages -->
+                <th:block th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}">
+                    <a th:if="${i >= products.number - 2 and i <= products.number + 2}"
+                       th:href="@{/products/browse(page=${i}, category=${selectedCat}, brand=${selectedBrand}, q=${query}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                       class="sl-page-btn"
+                       th:classappend="${i == products.number} ? ' active' : ''"
+                       th:text="${i + 1}"></a>
+                </th:block>
+
+                <!-- Next -->
+                <a th:if="${!products.last}"
+                   th:href="@{/products/browse(page=${products.number + 1}, category=${selectedCat}, brand=${selectedBrand}, q=${query}, sortBy=${sortBy}, sortDir=${sortDir})}"
+                   class="sl-page-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer th:replace="~{fragments :: footer}"></footer>
+<div th:replace="~{fragments :: scripts}"></div>
+<script th:src="@{/js/main.js}"></script>
+<script>
+    function toggleMobileFilter() {
+        var panel = document.querySelector('.filter-panel');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+    $(document).ready(function () { updateCartCount(); });
+</script>
+</body>
+</html>

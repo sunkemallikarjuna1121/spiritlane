@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('All Orders')}"></head>
+<link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+<div class="sl-dashboard-wrapper">
+    <aside class="sl-sidebar">
+        <div class="sidebar-header">
+            <div style="font-family:var(--font-brand);font-size:1.2rem;color:var(--primary-light);">Spirit<span style="color:var(--accent);">Lane</span></div>
+            <div class="sidebar-role-badge">Admin Panel</div>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="nav-item"><a th:href="@{/admin/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt"></i>Dashboard</a></li>
+            <li class="nav-item"><a th:href="@{/admin/shops}" class="nav-link"><i class="fas fa-store"></i>Shops</a></li>
+            <li class="nav-item"><a th:href="@{/admin/customers}" class="nav-link"><i class="fas fa-users"></i>Customers</a></li>
+            <li class="nav-item"><a th:href="@{/admin/agents}" class="nav-link"><i class="fas fa-motorcycle"></i>Agents</a></li>
+            <li class="nav-item"><a th:href="@{/admin/orders}" class="nav-link active"><i class="fas fa-box"></i>All Orders</a></li>
+            <li class="nav-item"><a th:href="@{/admin/products}" class="nav-link"><i class="fas fa-wine-bottle"></i>Products</a></li>
+        </ul>
+    </aside>
+    <div class="sl-dashboard-content">
+        <div class="page-header"><h1><i class="fas fa-box me-2"></i>All Orders</h1></div>
+        <div th:replace="~{fragments :: alerts}"></div>
+        <div class="table-container">
+            <div class="table-header">
+                <h3>Orders (<span th:text="${orders.totalElements}"></span>)</h3>
+                <input type="text" class="table-search" placeholder="Search orders..."
+                       id="ordSearch" onkeyup="filterTable('ordSearch','ordBody')"/>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="sl-table">
+                    <thead><tr><th>Order #</th><th>Customer</th><th>Shop</th><th>Amount</th><th>Order Status</th><th>Payment</th><th>Date</th><th>View</th></tr></thead>
+                    <tbody id="ordBody">
+                        <tr th:each="o : ${orders.content}">
+                            <td style="color:var(--primary-light);font-size:0.82rem;font-weight:700;" th:text="${o.orderNumber}"></td>
+                            <td th:text="${o.customer.fullName}"></td>
+                            <td th:text="${o.shop.shopName}"></td>
+                            <td style="font-weight:600;" th:text="'₹' + ${o.totalAmount}"></td>
+                            <td>
+                                <span class="status-badge"
+                                      th:classappend="${'status-' + #strings.toLowerCase(#strings.replace(o.orderStatus.name(),'_','-'))}"
+                                      th:text="${o.orderStatus}"></span>
+                            </td>
+                            <td>
+                                <span th:if="${o.paymentStatus.name() == 'PAID'}" style="color:var(--success);font-size:0.82rem;">Paid</span>
+                                <span th:unless="${o.paymentStatus.name() == 'PAID'}" style="color:#ffc107;font-size:0.82rem;" th:text="${o.paymentStatus}"></span>
+                            </td>
+                            <td style="font-size:0.82rem;color:var(--text-muted);" th:text="${#temporals.format(o.createdAt,'dd MMM yyyy')}"></td>
+                            <td>
+                                <a th:href="@{/admin/orders/{id}(id=${o.id})}" class="btn-outline-sl px-2 py-1" style="font-size:0.78rem;">View</a>
+                            </td>
+                        </tr>
+                        <tr th:if="${orders.totalElements == 0}">
+                            <td colspan="8" class="text-center" style="color:var(--text-muted);padding:2rem;">No orders yet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            <div th:if="${orders.totalPages > 1}" class="sl-pagination p-3">
+                <a th:if="${!orders.first}" th:href="@{/admin/orders(page=${orders.number - 1})}" class="sl-page-btn"><i class="fas fa-chevron-left"></i></a>
+                <th:block th:each="i : ${#numbers.sequence(0, orders.totalPages - 1)}">
+                    <a th:if="${i >= orders.number - 2 and i <= orders.number + 2}"
+                       th:href="@{/admin/orders(page=${i})}" class="sl-page-btn"
+                       th:classappend="${i == orders.number} ? ' active'" th:text="${i + 1}"></a>
+                </th:block>
+                <a th:if="${!orders.last}" th:href="@{/admin/orders(page=${orders.number + 1})}" class="sl-page-btn"><i class="fas fa-chevron-right"></i></a>
+            </div>
+        </div>
+    </div>
+</div>
+<div th:replace="~{fragments :: scripts}"></div>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

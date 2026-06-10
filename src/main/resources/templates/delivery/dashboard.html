@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('Delivery Dashboard')}"></head>
+<link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="sl-dashboard-wrapper">
+    <aside class="sl-sidebar">
+        <div class="sidebar-header">
+            <div style="font-family:var(--font-brand);font-size:1.2rem;color:var(--primary-light);">Spirit<span style="color:var(--accent);">Lane</span></div>
+            <div class="sidebar-role-badge">Delivery Agent</div>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="sidebar-section-label">Overview</li>
+            <li class="nav-item">
+                <a th:href="@{/delivery/dashboard}" class="nav-link active">
+                    <i class="fas fa-tachometer-alt"></i>Dashboard
+                </a>
+            </li>
+            <li class="sidebar-section-label">Deliveries</li>
+            <li class="nav-item">
+                <a th:href="@{/delivery/orders}" class="nav-link">
+                    <i class="fas fa-motorcycle"></i>My Deliveries
+                </a>
+            </li>
+            <li class="sidebar-section-label">Account</li>
+            <li class="nav-item">
+                <form th:action="@{/auth/logout}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="nav-link w-100" style="background:none;border:none;text-align:left;cursor:pointer;">
+                        <i class="fas fa-sign-out-alt"></i>Logout
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </aside>
+
+    <div class="sl-dashboard-content">
+        <div class="page-header">
+            <div>
+                <h1>Welcome, <span th:text="${user.fullName}">Agent</span> 👋</h1>
+                <p class="page-subtitle">Delivery Agent Dashboard</p>
+            </div>
+        </div>
+
+        <div th:replace="~{fragments :: alerts}"></div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon gold"><i class="fas fa-motorcycle"></i></div>
+                <div>
+                    <div class="stat-label">Total Deliveries</div>
+                    <div class="stat-value"
+                         th:text="${activeOrders != null ? activeOrders.totalElements : 0}">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange"><i class="fas fa-clock"></i></div>
+                <div>
+                    <div class="stat-label">Active Now</div>
+                    <div class="stat-value"
+                         th:text="${activeOrders != null ? activeOrders.content.?[orderStatus.name() == 'OUT_FOR_DELIVERY'].size() : 0}">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+                <div>
+                    <div class="stat-label">Delivered Today</div>
+                    <div class="stat-value"
+                         th:text="${activeOrders != null ? activeOrders.content.?[orderStatus.name() == 'DELIVERED'].size() : 0}">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Deliveries -->
+        <div class="table-container mt-4">
+            <div class="table-header">
+                <h3><i class="fas fa-motorcycle me-2"></i>Assigned Deliveries</h3>
+                <a th:href="@{/delivery/orders}" class="btn-outline-sl px-3 py-1" style="font-size:0.82rem;">View All</a>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="sl-table">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Customer</th>
+                            <th>Shop</th>
+                            <th>Address</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="order : ${activeOrders.content}">
+                            <td style="color:var(--primary-light);font-weight:700;font-size:0.82rem;"
+                                th:text="${order.orderNumber}"></td>
+                            <td>
+                                <div th:text="${order.customer.fullName}"></div>
+                                <div style="font-size:0.78rem;color:var(--text-muted);"
+                                     th:text="${order.customer.phone}"></div>
+                            </td>
+                            <td style="font-size:0.85rem;" th:text="${order.shop.shopName}"></td>
+                            <td style="font-size:0.78rem;color:var(--text-muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                                th:text="${order.deliveryAddress.getFullAddress()}"></td>
+                            <td style="font-weight:600;color:var(--primary-light);"
+                                th:text="'₹' + ${order.totalAmount}"></td>
+                            <td>
+                                <span class="status-badge"
+                                      th:classappend="${'status-' + #strings.toLowerCase(#strings.replace(order.orderStatus.name(),'_','-'))}"
+                                      th:text="${order.orderStatus}"></span>
+                            </td>
+                            <td>
+                                <a th:href="@{/delivery/orders/{id}(id=${order.id})}"
+                                   class="btn-outline-sl px-2 py-1" style="font-size:0.78rem;">
+                                    Update
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${activeOrders == null or activeOrders.totalElements == 0}">
+                            <td colspan="7" class="text-center" style="color:var(--text-muted);padding:3rem;">
+                                <div style="font-size:3rem;">🏍️</div>
+                                <p class="mt-2">No deliveries assigned yet.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

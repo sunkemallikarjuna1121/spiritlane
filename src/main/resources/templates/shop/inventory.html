@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('Inventory')}"></head>
+<link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="sl-dashboard-wrapper">
+    <aside class="sl-sidebar">
+        <div class="sidebar-header">
+            <div style="font-family:var(--font-brand);font-size:1.2rem;color:var(--primary-light);">Spirit<span style="color:var(--accent);">Lane</span></div>
+            <div class="sidebar-role-badge">Shop Owner</div>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="nav-item"><a th:href="@{/shop/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt"></i>Dashboard</a></li>
+            <li class="nav-item"><a th:href="@{/shop/inventory}" class="nav-link active"><i class="fas fa-boxes"></i>Inventory</a></li>
+            <li class="nav-item"><a th:href="@{/shop/orders}" class="nav-link"><i class="fas fa-box"></i>Orders</a></li>
+            <li class="nav-item">
+                <form th:action="@{/auth/logout}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit" class="nav-link w-100" style="background:none;border:none;text-align:left;cursor:pointer;">
+                        <i class="fas fa-sign-out-alt"></i>Logout
+                    </button>
+                </form>
+            </li>
+        </ul>
+    </aside>
+
+    <div class="sl-dashboard-content">
+        <div class="page-header">
+            <div>
+                <h1><i class="fas fa-boxes me-2"></i>Inventory</h1>
+                <p class="page-subtitle" th:text="'Managing products for: ' + ${shop.shopName}"></p>
+            </div>
+            <button class="btn-primary-sl px-3 py-2" style="font-size:0.9rem;"
+                    onclick="document.getElementById('addProductModal').style.display='flex'">
+                <i class="fas fa-plus me-2"></i>Add Product
+            </button>
+        </div>
+
+        <div th:replace="~{fragments :: alerts}"></div>
+
+        <!-- Inventory Table -->
+        <div class="table-container">
+            <div class="table-header">
+                <h3>Products in Stock (<span th:text="${#lists.size(inventory)}"></span>)</h3>
+                <input type="text" class="table-search" placeholder="Search products..."
+                       id="invSearch" onkeyup="filterTable('invSearch','invBody')"/>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="sl-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th>MRP</th>
+                            <th>Selling Price</th>
+                            <th>Discount</th>
+                            <th>Stock</th>
+                            <th>Available</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invBody">
+                        <tr th:each="inv : ${inventory}">
+                            <td>
+                                <div style="display:flex;align-items:center;gap:0.7rem;">
+                                    <img th:src="${inv.product.getPrimaryImageUrl()}"
+                                         style="width:40px;height:40px;object-fit:cover;border-radius:var(--radius-sm);background:var(--dark-surface);"
+                                         onerror="this.src='/images/product-placeholder.png'"/>
+                                    <div>
+                                        <div style="font-weight:600;color:var(--text-light);font-size:0.88rem;"
+                                             th:text="${inv.product.name}"></div>
+                                        <div style="font-size:0.75rem;color:var(--text-muted);"
+                                             th:text="${inv.product.brand != null ? inv.product.brand.name : ''} + ' · ' + ${inv.product.volumeMl != null ? inv.product.volumeMl + 'ml' : ''}"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="font-size:0.85rem;" th:text="${inv.product.category.name}"></td>
+                            <td style="color:var(--text-muted);" th:text="'₹' + ${inv.mrp}"></td>
+                            <td style="font-weight:600;color:var(--primary-light);"
+                                th:text="'₹' + ${inv.sellingPrice}"></td>
+                            <td>
+                                <span th:if="${inv.discountPct != null and inv.discountPct.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                                      style="color:var(--success);font-size:0.82rem;font-weight:600;"
+                                      th:text="${#numbers.formatDecimal(inv.discountPct,1,0) + '%'}"></span>
+                                <span th:unless="${inv.discountPct != null and inv.discountPct.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                                      style="color:var(--text-muted);font-size:0.82rem;">—</span>
+                            </td>
+                            <td>
+                                <!-- Inline stock update form -->
+                                <form th:action="@{/shop/inventory/{id}/update-stock(id=${inv.id})}" method="post"
+                                      style="display:flex;align-items:center;gap:0.4rem;">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <input type="number" name="stock" th:value="${inv.stockQuantity}"
+                                           min="0" style="width:65px;background:var(--dark-surface);border:1px solid var(--border-color);color:var(--text-light);border-radius:var(--radius-sm);padding:0.25rem 0.4rem;font-size:0.85rem;text-align:center;"/>
+                                    <button type="submit"
+                                            style="background:rgba(200,134,10,0.2);color:var(--primary-light);border:1px solid rgba(200,134,10,0.3);border-radius:var(--radius-sm);padding:0.25rem 0.5rem;cursor:pointer;font-size:0.78rem;">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                </form>
+                            </td>
+                            <td>
+                                <form th:action="@{/shop/inventory/{id}/toggle(id=${inv.id})}" method="post">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit"
+                                            th:style="${inv.isAvailable} ? 'background:rgba(40,167,69,0.2);color:#6ee08a;border:1px solid rgba(40,167,69,0.3);' : 'background:rgba(220,53,69,0.2);color:#ff6b6b;border:1px solid rgba(220,53,69,0.3);'"
+                                            style="border-radius:var(--radius-sm);padding:0.25rem 0.6rem;cursor:pointer;font-size:0.78rem;">
+                                        <span th:text="${inv.isAvailable} ? 'Active' : 'Inactive'"></span>
+                                    </button>
+                                </form>
+                            </td>
+                            <td>
+                                <a th:href="@{/products/detail/{id}(id=${inv.id})}"
+                                   target="_blank"
+                                   style="font-size:0.78rem;color:var(--text-muted);">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(inventory)}">
+                            <td colspan="8" class="text-center" style="color:var(--text-muted);padding:3rem;">
+                                <div style="font-size:3rem;">📦</div>
+                                <p class="mt-2">No products added yet. Click "Add Product" to get started.</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── Add Product Modal ─── -->
+<div id="addProductModal"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:2000;align-items:center;justify-content:center;padding:1rem;">
+    <div style="background:var(--dark-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:2rem;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;position:relative;">
+        <!-- Close -->
+        <button onclick="document.getElementById('addProductModal').style.display='none'"
+                style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;">
+            <i class="fas fa-times"></i>
+        </button>
+
+        <h4 style="color:var(--primary-light);margin-bottom:1.5rem;">
+            <i class="fas fa-plus-circle me-2"></i>Add Product to Inventory
+        </h4>
+
+        <form th:action="@{/shop/inventory/add}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+            <div class="sl-form-group">
+                <label class="sl-form-label">Select Product *</label>
+                <select name="product.id" class="sl-form-control" required>
+                    <option value="">-- Choose a product --</option>
+                    <option th:each="p : ${allProducts}"
+                            th:value="${p.id}"
+                            th:text="${p.name} + ' (' + ${p.category.name} + ')' + (${p.volumeMl != null} ? ' ' + ${p.volumeMl} + 'ml' : '')">
+                    </option>
+                </select>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="sl-form-group">
+                        <label class="sl-form-label">MRP (₹) *</label>
+                        <input type="number" name="mrp" class="sl-form-control"
+                               placeholder="0.00" step="0.01" min="0" required/>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="sl-form-group">
+                        <label class="sl-form-label">Selling Price (₹) *</label>
+                        <input type="number" name="sellingPrice" class="sl-form-control"
+                               placeholder="0.00" step="0.01" min="0" required/>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="sl-form-group">
+                        <label class="sl-form-label">Discount %</label>
+                        <input type="number" name="discountPct" class="sl-form-control"
+                               placeholder="0" step="0.01" min="0" max="100" value="0"/>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="sl-form-group">
+                        <label class="sl-form-label">Stock Quantity *</label>
+                        <input type="number" name="stockQuantity" class="sl-form-control"
+                               placeholder="0" min="0" required/>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="sl-form-group">
+                        <label class="sl-form-label">Min Order Qty</label>
+                        <input type="number" name="minOrderQty" class="sl-form-control"
+                               value="1" min="1"/>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="sl-form-group">
+                        <label class="sl-form-label">Max Order Qty</label>
+                        <input type="number" name="maxOrderQty" class="sl-form-control"
+                               value="10" min="1"/>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-3 mt-3">
+                <button type="submit" class="btn-primary-sl px-4 py-2">
+                    <i class="fas fa-plus me-2"></i>Add to Inventory
+                </button>
+                <button type="button" class="btn-outline-sl px-4 py-2"
+                        onclick="document.getElementById('addProductModal').style.display='none'">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div th:replace="~{fragments :: scripts}"></div>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

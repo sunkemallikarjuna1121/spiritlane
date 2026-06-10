@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('Order Confirmed')}"></head>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="container py-5 text-center">
+    <div class="sl-card mx-auto" style="max-width:600px;">
+        <!-- Success animation -->
+        <div style="font-size:5rem;margin-bottom:1rem;animation:bounceIn 0.6s ease;">✅</div>
+        <h2 style="color:var(--success);margin-bottom:0.5rem;">Payment Successful!</h2>
+        <p style="color:var(--text-muted);">Your order has been placed and the shop has been notified.</p>
+
+        <div class="sl-card mt-3 mb-3" style="text-align:left;">
+            <div class="summary-row">
+                <span>Order Number</span>
+                <strong style="color:var(--primary-light);" th:text="${order.orderNumber}"></strong>
+            </div>
+            <div class="summary-row">
+                <span>Amount Paid</span>
+                <strong th:text="'₹' + ${order.totalAmount}"></strong>
+            </div>
+            <div class="summary-row">
+                <span>Status</span>
+                <span class="status-badge status-confirmed">Confirmed</span>
+            </div>
+            <div class="summary-row">
+                <span>Estimated Delivery</span>
+                <span th:text="${#temporals.format(order.estimatedDelivery, 'dd MMM yyyy, hh:mm a')}"></span>
+            </div>
+            <div class="summary-row">
+                <span>Delivery Address</span>
+                <span style="font-size:0.85rem;" th:text="${order.deliveryAddress.getFullAddress()}"></span>
+            </div>
+        </div>
+
+        <div class="sl-alert sl-alert-info" style="text-align:left;">
+            <i class="fas fa-motorcycle me-2"></i>
+            Your order is being prepared at <strong th:text="${order.shop.shopName}"></strong>.
+            A delivery agent will be assigned shortly.
+        </div>
+
+        <div class="d-flex gap-3 justify-content-center mt-3 flex-wrap">
+            <a th:href="@{/customer/orders}" class="btn-primary-sl px-4 py-2">
+                <i class="fas fa-box me-2"></i>Track Order
+            </a>
+            <a th:href="@{/products/browse}" class="btn-outline-sl px-4 py-2">
+                <i class="fas fa-store me-2"></i>Continue Shopping
+            </a>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments :: scripts}"></div>
+</body>
+</html>

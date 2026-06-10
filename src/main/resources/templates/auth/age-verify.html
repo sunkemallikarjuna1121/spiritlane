@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Age Verification | SpiritLane</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+    <style>
+        .age-gate {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(ellipse at center, #2A1A05 0%, #1A0F00 60%, #0D0700 100%);
+        }
+        .age-gate-card {
+            text-align: center;
+            max-width: 480px;
+            width: 100%;
+            padding: 3rem 2rem;
+            background: rgba(42,26,5,0.9);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            backdrop-filter: blur(10px);
+        }
+        .age-gate-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+        .age-gate h1 { font-size: 2.2rem; margin-bottom: 0.5rem; }
+        .age-gate p { color: var(--text-muted); margin-bottom: 2rem; }
+        .age-btn { min-width: 180px; padding: 0.85rem 2rem; font-size: 1rem; border-radius: var(--radius); border: none; cursor: pointer; font-weight: 700; transition: all 0.3s; }
+        .age-btn-yes { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: var(--dark); }
+        .age-btn-yes:hover { background: linear-gradient(135deg, var(--primary-light), var(--primary)); transform: translateY(-3px); box-shadow: var(--shadow-md); }
+        .age-btn-no  { background: transparent; color: var(--text-muted); border: 1px solid var(--border-color) !important; }
+        .age-btn-no:hover { color: var(--danger); border-color: var(--danger) !important; }
+    </style>
+</head>
+<body>
+<div class="age-gate">
+    <div class="age-gate-card">
+        <span class="age-gate-icon">🍾</span>
+        <h1>SpiritLane</h1>
+        <p class="lead" style="color:var(--primary-light)">Premium Alcohol Home Delivery</p>
+        <hr class="gold-divider"/>
+        <h3 style="color:var(--text-light); margin-bottom:0.5rem;">Are you 18 or older?</h3>
+        <p>You must be of legal drinking age (18+) in India to access this website.</p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a th:href="@{/auth/login}" class="age-btn age-btn-yes">
+                <i class="fas fa-check me-2"></i>Yes, I am 18+
+            </a>
+            <a href="https://www.google.com" class="age-btn age-btn-no border">
+                <i class="fas fa-times me-2"></i>No, Exit
+            </a>
+        </div>
+        <div class="age-disclaimer mt-4">
+            <i class="fas fa-exclamation-triangle me-1"></i>
+            Drinking alcohol is injurious to health. Drink responsibly.
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('Products')}"></head>
+<link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+<body>
+<nav th:replace="~{fragments :: navbar}"></nav>
+
+<div class="sl-dashboard-wrapper">
+    <aside class="sl-sidebar">
+        <div class="sidebar-header">
+            <div style="font-family:var(--font-brand);font-size:1.2rem;color:var(--primary-light);">Spirit<span style="color:var(--accent);">Lane</span></div>
+            <div class="sidebar-role-badge">Admin Panel</div>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="nav-item"><a th:href="@{/admin/dashboard}" class="nav-link"><i class="fas fa-tachometer-alt"></i>Dashboard</a></li>
+            <li class="nav-item"><a th:href="@{/admin/shops}" class="nav-link"><i class="fas fa-store"></i>Shops</a></li>
+            <li class="nav-item"><a th:href="@{/admin/customers}" class="nav-link"><i class="fas fa-users"></i>Customers</a></li>
+            <li class="nav-item"><a th:href="@{/admin/agents}" class="nav-link"><i class="fas fa-motorcycle"></i>Agents</a></li>
+            <li class="nav-item"><a th:href="@{/admin/orders}" class="nav-link"><i class="fas fa-box"></i>All Orders</a></li>
+            <li class="nav-item"><a th:href="@{/admin/products}" class="nav-link active"><i class="fas fa-wine-bottle"></i>Products</a></li>
+        </ul>
+    </aside>
+
+    <div class="sl-dashboard-content">
+        <div class="page-header">
+            <h1><i class="fas fa-wine-bottle me-2"></i>Products</h1>
+            <a th:href="@{/admin/products/add}" class="btn-primary-sl px-3 py-2" style="font-size:0.9rem;">
+                <i class="fas fa-plus me-2"></i>Add Product
+            </a>
+        </div>
+
+        <div th:replace="~{fragments :: alerts}"></div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <h3>All Products (<span th:text="${products.totalElements}"></span>)</h3>
+                <input type="text" class="table-search" placeholder="Search products..."
+                       id="prodSearch" onkeyup="filterTable('prodSearch','prodBody')"/>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="sl-table">
+                    <thead>
+                        <tr><th>Image</th><th>Name</th><th>Category</th><th>Brand</th><th>Type</th><th>ABV</th><th>Volume</th><th>Status</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody id="prodBody">
+                        <tr th:each="p : ${products.content}">
+                            <td>
+                                <img th:src="${p.getPrimaryImageUrl()}"
+                                     style="width:40px;height:40px;object-fit:cover;border-radius:var(--radius-sm);background:var(--dark-surface);"
+                                     onerror="this.src='/images/product-placeholder.png'"/>
+                            </td>
+                            <td style="font-weight:600;font-size:0.88rem;" th:text="${p.name}"></td>
+                            <td style="font-size:0.85rem;" th:text="${p.category.name}"></td>
+                            <td style="font-size:0.85rem;" th:text="${p.brand != null ? p.brand.name : '—'}"></td>
+                            <td>
+                                <span class="status-badge status-confirmed"
+                                      style="font-size:0.7rem;" th:text="${p.productType}"></span>
+                            </td>
+                            <td style="font-size:0.85rem;"
+                                th:text="${p.alcoholContent != null ? p.alcoholContent + '%' : '—'}"></td>
+                            <td style="font-size:0.85rem;"
+                                th:text="${p.volumeMl != null ? p.volumeMl + ' ml' : '—'}"></td>
+                            <td>
+                                <span th:if="${p.isActive}" class="status-badge status-delivered" style="font-size:0.7rem;">Active</span>
+                                <span th:unless="${p.isActive}" class="status-badge status-cancelled" style="font-size:0.7rem;">Inactive</span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <a th:href="@{/products/detail/{id}(id=${p.id})}"
+                                       target="_blank"
+                                       style="font-size:0.78rem;color:var(--text-muted);padding:0.2rem 0.5rem;">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <form th:action="@{/admin/products/{id}/delete(id=${p.id})}" method="post"
+                                          onsubmit="return confirm('Delete this product?')">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                        <button type="submit"
+                                                style="background:rgba(220,53,69,0.2);color:#ff6b6b;border:1px solid rgba(220,53,69,0.3);border-radius:var(--radius-sm);padding:0.2rem 0.5rem;cursor:pointer;font-size:0.78rem;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${products.totalElements == 0}">
+                            <td colspan="9" class="text-center" style="color:var(--text-muted);padding:3rem;">
+                                No products found. <a th:href="@{/admin/products/add}" style="color:var(--primary-light);">Add one now</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:if="${products.totalPages > 1}" class="sl-pagination p-3">
+                <a th:if="${!products.first}" th:href="@{/admin/products(page=${products.number - 1})}" class="sl-page-btn"><i class="fas fa-chevron-left"></i></a>
+                <th:block th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}">
+                    <a th:if="${i >= products.number - 2 and i <= products.number + 2}"
+                       th:href="@{/admin/products(page=${i})}" class="sl-page-btn"
+                       th:classappend="${i == products.number} ? ' active'" th:text="${i + 1}"></a>
+                </th:block>
+                <a th:if="${!products.last}" th:href="@{/admin/products(page=${products.number + 1})}" class="sl-page-btn"><i class="fas fa-chevron-right"></i></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div th:replace="~{fragments :: scripts}"></div>
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>
