@@ -72,7 +72,9 @@
                                         <div style="font-weight:600;color:var(--text-light);font-size:0.88rem;"
                                              th:text="${inv.product.name}"></div>
                                         <div style="font-size:0.75rem;color:var(--text-muted);"
-                                             th:text="${inv.product.brand != null ? inv.product.brand.name : ''} + ' · ' + ${inv.product.volumeMl != null ? inv.product.volumeMl + 'ml' : ''}"></div>
+                                             th:text="${(inv.product.brand != null ? inv.product.brand.name : '') +
+                                            ' · ' +(inv.product.volumeMl != null ? inv.product.volumeMl + 'ml' : '')}">
+                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -153,8 +155,8 @@
                 <select name="product.id" class="sl-form-control" required>
                     <option value="">-- Choose a product --</option>
                     <option th:each="p : ${allProducts}"
-                            th:value="${p.id}"
-                            th:text="${p.name} + ' (' + ${p.category.name} + ')' + (${p.volumeMl != null} ? ' ' + ${p.volumeMl} + 'ml' : '')">
+                        th:value="${p.id}"
+                        th:text="${p.name + ' (' + p.category.name + ')' + (p.volumeMl != null ? ' ' + p.volumeMl + 'ml' : '')}">
                     </option>
                 </select>
             </div>

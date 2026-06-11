@@ -44,6 +44,7 @@ public class ShopController {
             return "shop/dashboard";
         } catch (Exception e) {
             model.addAttribute("noShop", true);
+            model.addAttribute("shop", new Shop());
             return "shop/register-shop";
         }
     }

@@ -27,7 +27,7 @@ public class CartServiceImpl implements CartService {
 
     @Override
     public Cart getOrCreateCart(Long userId) {
-        return cartRepository.findByUserId(userId).orElseGet(() -> {
+        return cartRepository.findByUserIdWithItems(userId).orElseGet(() -> {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 

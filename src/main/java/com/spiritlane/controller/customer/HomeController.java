@@ -25,7 +25,7 @@ public class HomeController {
     public String home(Model model) {
         model.addAttribute("categories",   productService.getAllCategories());
         model.addAttribute("brands",       productService.getAllBrands());
-        model.addAttribute("latestProducts", productService.getLatestProducts(12));
+        model.addAttribute("latestProducts", productService.browseProducts(null, null, null, PageRequest.of(0, 12, Sort.by(Sort.Direction.DESC, "id"))));
         model.addAttribute("topBanners",
                 bannerRepository.findByIsActiveTrueAndPositionOrderBySortOrderAsc(Banner.BannerPosition.HOME_TOP));
         model.addAttribute("midBanners",

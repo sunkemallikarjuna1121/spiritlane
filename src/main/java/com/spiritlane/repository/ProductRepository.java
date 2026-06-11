@@ -21,6 +21,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p WHERE p.isActive = true ORDER BY p.createdAt DESC")
     List<Product> findLatestProducts(Pageable pageable);
 
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.images WHERE p.isActive = true ORDER BY p.createdAt DESC")
+    List<Product> findLatestProductsWithImages(Pageable pageable);
+
     @Query("SELECT p FROM Product p WHERE p.isActive = true AND " +
            "(LOWER(p.name) LIKE LOWER(CONCAT('%',:q,'%')) OR " +
            "LOWER(p.description) LIKE LOWER(CONCAT('%',:q,'%')) OR " +

@@ -3,8 +3,8 @@ package com.spiritlane.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "carts")
@@ -23,7 +23,7 @@ public class Cart {
     private Shop shop;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<CartItem> items = new ArrayList<>();
+    private Set<CartItem> items = new LinkedHashSet<>();
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -61,11 +61,11 @@ public class Cart {
 		this.shop = shop;
 	}
 
-	public List<CartItem> getItems() {
+	public Set<CartItem> getItems() {
 		return items;
 	}
 
-	public void setItems(List<CartItem> items) {
+	public void setItems(Set<CartItem> items) {
 		this.items = items;
 	}
 

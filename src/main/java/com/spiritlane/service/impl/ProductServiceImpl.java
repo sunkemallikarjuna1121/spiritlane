@@ -9,6 +9,7 @@ import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -67,7 +68,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public List<Product> getLatestProducts(int limit) {
-        return productRepository.findLatestProducts(PageRequest.of(0, limit));
+        return productRepository.findLatestProductsWithImages(PageRequest.of(0, limit));
     }
 
     @Override
@@ -95,20 +96,40 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public ShopInventory findInventoryById(Long id) {
-        return inventoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Inventory item", id));
+        return inventoryRepository.findByIdWithImages(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Inventory item", id));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<ShopInventory> getShopInventory(Long shopId) {
-        return inventoryRepository.findByShopId(shopId);
+        return inventoryRepository.findByShopIdWithImages(shopId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ShopInventory> browseProducts(Long catId, Long brandId, String query, Pageable pageable) {
         String q = (query == null) ? "" : query.trim();
-        return inventoryRepository.browseProducts(catId, brandId, q, pageable);
+        
+        // Get paginated IDs first
+        Page<Long> idPage = inventoryRepository.browseProductIds(catId, brandId, q, pageable);
+        
+        if (idPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+        
+        // Fetch full objects with images for those IDs
+        List<ShopInventory> items = inventoryRepository.findByIdsWithImages(idPage.getContent());
+        
+        // Preserve the original sort order from idPage
+        Map<Long, ShopInventory> itemMap = items.stream()
+                .collect(java.util.stream.Collectors.toMap(ShopInventory::getId, i -> i));
+        List<ShopInventory> sorted = idPage.getContent().stream()
+                .map(itemMap::get)
+                .filter(i -> i != null)
+                .collect(java.util.stream.Collectors.toList());
+        
+        return new org.springframework.data.domain.PageImpl<>(sorted, pageable, idPage.getTotalElements());
+
     }
 }
