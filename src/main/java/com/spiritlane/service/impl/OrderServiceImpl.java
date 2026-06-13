@@ -163,7 +163,6 @@ public class OrderServiceImpl implements OrderService {
             orderItemRepository.save(oi);
         }
 
-        cartService.clearCart(userId);
         notificationService.sendNotification(userId,
                 "Order Placed!", "Your order #" + savedOrder.getOrderNumber() + " has been placed successfully.",
                 Notification.NotificationType.ORDER);
@@ -236,6 +235,7 @@ public class OrderServiceImpl implements OrderService {
         order.setPaymentStatus(Order.PaymentStatus.PAID);
         order.setOrderStatus(Order.OrderStatus.CONFIRMED);
         Order saved = orderRepository.save(order);
+        cartService.clearCart(order.getCustomer().getId());
 
         notificationService.sendNotification(order.getCustomer().getId(),
                 "Payment Successful!", "Payment received for order #" + order.getOrderNumber(),

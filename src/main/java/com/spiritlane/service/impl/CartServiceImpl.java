@@ -7,6 +7,8 @@ import com.spiritlane.repository.*;
 import com.spiritlane.service.CartService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.hibernate.Hibernate;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
@@ -26,16 +28,27 @@ public class CartServiceImpl implements CartService {
 
 
     @Override
+    @Transactional
     public Cart getOrCreateCart(Long userId) {
-        return cartRepository.findByUserIdWithItems(userId).orElseGet(() -> {
+        Cart cart = cartRepository.findByUserIdWithItems(userId).orElseGet(() -> {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
-            Cart cart = new Cart();
-            cart.setUser(user);
+            Cart newCart = new Cart();
+            newCart.setUser(user);
 
-            return cartRepository.save(cart);
+            return cartRepository.save(newCart);
         });
+
+        // Force load lazy collections
+        Hibernate.initialize(cart.getItems());
+        cart.getItems().forEach(item -> {
+            Hibernate.initialize(item.getInventory());
+            Hibernate.initialize(item.getInventory().getProduct());
+            Hibernate.initialize(item.getInventory().getProduct().getBrand());
+        });
+
+        return cart;
     }
 
     @Override

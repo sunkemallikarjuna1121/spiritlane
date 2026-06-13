@@ -1,6 +1,7 @@
 package com.spiritlane.controller.shop;
 
 import com.spiritlane.exception.BusinessException;
+import com.spiritlane.controller.customer.AuthController;
 import com.spiritlane.entity.*;
 import com.spiritlane.security.CustomUserDetails;
 import com.spiritlane.service.*;
@@ -11,11 +12,15 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 @RequestMapping("/shop")
 public class ShopController {
 
+	private static final Logger logger =
+	        LoggerFactory.getLogger(AuthController.class);
     private final ShopService shopService;
     private final ProductService productService;
     private final OrderService orderService;
@@ -34,6 +39,7 @@ public class ShopController {
     /* ─── Dashboard ─── */
     @GetMapping("/dashboard")
     public String dashboard(@AuthenticationPrincipal CustomUserDetails principal, Model model) {
+        logger.info("[ShopController] dashboard() : START");
         try {
             Shop shop = shopService.findByOwnerId(principal.getId());
             model.addAttribute("shop", shop);
@@ -41,10 +47,12 @@ public class ShopController {
                     orderService.getShopOrders(shop.getId(),
                             PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"))));
             model.addAttribute("inventory", productService.getShopInventory(shop.getId()));
+            logger.info("[ShopController] dashboard() : END");
             return "shop/dashboard";
         } catch (Exception e) {
             model.addAttribute("noShop", true);
             model.addAttribute("shop", new Shop());
+            logger.info("[ShopController] dashboard() : END");
             return "shop/register-shop";
         }
     }
@@ -52,7 +60,9 @@ public class ShopController {
     /* ─── Register Shop ─── */
     @GetMapping("/register")
     public String registerShopForm(Model model) {
+    	logger.info("[ShopController] registerShopForm() : START");
         model.addAttribute("shop", new Shop());
+        logger.info("[ShopController] registerShopForm() : END");
         return "shop/register-shop";
     }
 
@@ -60,6 +70,7 @@ public class ShopController {
     public String registerShop(@AuthenticationPrincipal CustomUserDetails principal,
                                @ModelAttribute Shop shop,
                                RedirectAttributes ra) {
+        logger.info("[ShopController] registerShop() : START");
         try {
             shop.setOwner(userService.findById(principal.getId()));
             shop.setIsApproved(false);
@@ -67,9 +78,11 @@ public class ShopController {
             shopService.save(shop);
             ra.addFlashAttribute("successMsg",
                     "Shop registered! Awaiting admin approval.");
+            logger.info("[ShopController] registerShop() : END");
             return "redirect:/shop/dashboard";
         } catch (BusinessException e) {
             ra.addFlashAttribute("errorMsg", e.getMessage());
+            logger.info("[ShopController] registerShop() : END");
             return "redirect:/shop/register";
         }
     }
@@ -79,11 +92,13 @@ public class ShopController {
     public String inventory(@AuthenticationPrincipal CustomUserDetails principal,
                             @RequestParam(defaultValue = "0") int page,
                             Model model) {
+        logger.info("[ShopController] inventory() : START");
         Shop shop = shopService.findByOwnerId(principal.getId());
         model.addAttribute("shop", shop);
         model.addAttribute("inventory",
                 productService.getShopInventory(shop.getId()));
         model.addAttribute("allProducts", productService.getLatestProducts(200));
+        logger.info("[ShopController] inventory() : END");
         return "shop/inventory";
     }
 
@@ -91,6 +106,7 @@ public class ShopController {
     public String addInventory(@AuthenticationPrincipal CustomUserDetails principal,
                                @ModelAttribute ShopInventory inventory,
                                RedirectAttributes ra) {
+        logger.info("[ShopController] addInventory() : START");
         try {
             Shop shop = shopService.findByOwnerId(principal.getId());
             inventory.setShop(shop);
@@ -99,6 +115,7 @@ public class ShopController {
         } catch (Exception e) {
             ra.addFlashAttribute("errorMsg", e.getMessage());
         }
+        logger.info("[ShopController] addInventory() : END");
         return "redirect:/shop/inventory";
     }
 
@@ -106,19 +123,23 @@ public class ShopController {
     public String updateStock(@PathVariable Long id,
                               @RequestParam int stock,
                               RedirectAttributes ra) {
+        logger.info("[ShopController] updateStock() : START");
         ShopInventory inv = productService.findInventoryById(id);
         inv.setStockQuantity(stock);
         productService.saveInventory(inv);
         ra.addFlashAttribute("successMsg", "Stock updated.");
+        logger.info("[ShopController] updateStock() : END");
         return "redirect:/shop/inventory";
     }
 
     @PostMapping("/inventory/{id}/toggle")
     public String toggleAvailability(@PathVariable Long id, RedirectAttributes ra) {
+        logger.info("[ShopController] toggleAvailability() : START");
         ShopInventory inv = productService.findInventoryById(id);
         inv.setIsAvailable(!inv.getIsAvailable());
         productService.saveInventory(inv);
         ra.addFlashAttribute("successMsg", "Availability updated.");
+        logger.info("[ShopController] toggleAvailability() : END");
         return "redirect:/shop/inventory";
     }
 
@@ -127,17 +148,21 @@ public class ShopController {
     public String orders(@AuthenticationPrincipal CustomUserDetails principal,
                          @RequestParam(defaultValue = "0") int page,
                          Model model) {
+        logger.info("[ShopController] orders() : START");
         Shop shop = shopService.findByOwnerId(principal.getId());
         model.addAttribute("shop", shop);
         model.addAttribute("orders",
                 orderService.getShopOrders(shop.getId(),
                         PageRequest.of(page, 10, Sort.by(Sort.Direction.DESC, "createdAt"))));
+        logger.info("[ShopController] orders() : END");
         return "shop/orders";
     }
 
     @GetMapping("/orders/{id}")
     public String orderDetail(@PathVariable Long id, Model model) {
+        logger.info("[ShopController] orderDetail() : START");
         model.addAttribute("order", orderService.findById(id));
+        logger.info("[ShopController] orderDetail() : END");
         return "shop/order-detail";
     }
 
@@ -145,8 +170,10 @@ public class ShopController {
     public String updateStatus(@PathVariable Long id,
                                @RequestParam Order.OrderStatus status,
                                RedirectAttributes ra) {
+        logger.info("[ShopController] updateStatus() : START");
         orderService.updateOrderStatus(id, status);
         ra.addFlashAttribute("successMsg", "Order status updated to: " + status.name());
+        logger.info("[ShopController] updateStatus() : END");
         return "redirect:/shop/orders/" + id;
     }
 
@@ -154,9 +181,11 @@ public class ShopController {
     @PostMapping("/toggle-status")
     public String toggleStatus(@AuthenticationPrincipal CustomUserDetails principal,
                                RedirectAttributes ra) {
+        logger.info("[ShopController] toggleStatus() : START");
         Shop shop = shopService.findByOwnerId(principal.getId());
         shopService.toggleShopStatus(shop.getId());
         ra.addFlashAttribute("successMsg", "Shop status updated.");
+        logger.info("[ShopController] toggleStatus() : END");
         return "redirect:/shop/dashboard";
     }
 }

@@ -132,10 +132,14 @@
                     <span th:text="'₹' + ${cart.getSubtotal()}"></span>
                 </div>
                 <div class="summary-row">
-                    <span>Delivery</span>
-                    <span th:if="${cart.getSubtotal().compareTo(T(java.math.BigDecimal).valueOf(500)) >= 0}"
-                          style="color:var(--success);">FREE</span>
-                    <span th:unless="${cart.getSubtotal().compareTo(T(java.math.BigDecimal).valueOf(500)) >= 0}">₹40.00</span>
+                    <span th:if="${freeDelivery}"
+                        style="color:var(--success);">
+                        FREE
+                    </span>
+
+                    <span th:unless="${freeDelivery}">
+                        ₹40.00
+                    </span>
                 </div>
                 <div class="summary-row">
                     <span>GST (18%)</span>
@@ -257,6 +261,7 @@
                     var btn = document.getElementById('placeOrderBtn');
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-lock me-2"></i>Pay Now with Razorpay';
+                    btn.onclick = function() { openRazorpay(payment); };
                 }
             },
             prefill: { contact: '', email: '' }

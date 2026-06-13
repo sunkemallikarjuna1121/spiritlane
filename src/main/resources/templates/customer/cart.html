@@ -92,14 +92,17 @@
 
                 <div class="summary-row">
                     <span>Subtotal</span>
-                    <span id="cartSubtotal" th:text="'₹' + ${cart.getSubtotal()}"></span>
+                    <span id="cartSubtotal" th:text="'₹' + ${subtotal}"></span>
                 </div>
                 <div class="summary-row">
                     <span>Delivery</span>
                     <span id="deliveryFee">
-                        <span th:if="${cart.getSubtotal().compareTo(T(java.math.BigDecimal).valueOf(500)) >= 0}"
-                              style="color:var(--success);">FREE</span>
-                        <span th:unless="${cart.getSubtotal().compareTo(T(java.math.BigDecimal).valueOf(500)) >= 0}">₹40.00</span>
+                        <span th:if="${freeDelivery}" style="color:var(--success);">
+                            FREE
+                        </span>
+                        <span th:unless="${freeDelivery}">
+                            ₹40.00
+                        </span>
                     </span>
                 </div>
                 <div class="summary-row">
@@ -148,9 +151,7 @@
     </div>
 </div>
 
-<footer th:replace="~{fragments :: footer}"></footer>
 <div th:replace="~{fragments :: scripts}"></div>
-<script th:src="@{/js/main.js}"></script>
 <script>
     function updateQty(inventoryId, newQty) {
         var csrf = $('meta[name="_csrf"]').attr('content');
@@ -202,5 +203,6 @@
 
     $(document).ready(function() { updateCartCount(); });
 </script>
+<footer th:replace="~{fragments :: footer}"></footer>
 </body>
 </html>
