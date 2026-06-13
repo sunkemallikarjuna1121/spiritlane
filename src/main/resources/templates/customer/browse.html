@@ -188,29 +188,8 @@
             </div>
 
             <!-- Pagination -->
-            <div th:if="${products.totalPages > 1}" class="sl-pagination mt-4">
-                <!-- Prev -->
-                <a th:if="${!products.first}"
-                   th:href="@{/products/browse(page=${products.number - 1}, category=${selectedCat}, brand=${selectedBrand}, q=${query}, sortBy=${sortBy}, sortDir=${sortDir})}"
-                   class="sl-page-btn">
-                    <i class="fas fa-chevron-left"></i>
-                </a>
-
-                <!-- Pages -->
-                <th:block th:each="i : ${#numbers.sequence(0, products.totalPages - 1)}">
-                    <a th:if="${i >= products.number - 2 and i <= products.number + 2}"
-                       th:href="@{/products/browse(page=${i}, category=${selectedCat}, brand=${selectedBrand}, q=${query}, sortBy=${sortBy}, sortDir=${sortDir})}"
-                       class="sl-page-btn"
-                       th:classappend="${i == products.number} ? ' active' : ''"
-                       th:text="${i + 1}"></a>
-                </th:block>
-
-                <!-- Next -->
-                <a th:if="${!products.last}"
-                   th:href="@{/products/browse(page=${products.number + 1}, category=${selectedCat}, brand=${selectedBrand}, q=${query}, sortBy=${sortBy}, sortDir=${sortDir})}"
-                   class="sl-page-btn">
-                    <i class="fas fa-chevron-right"></i>
-                </a>
+            <div id="scrollLoader" class="text-center py-4" style="display:none;">
+                <div class="spinner-border" style="color:var(--primary);" role="status"></div>
             </div>
         </div>
     </div>
@@ -219,12 +198,55 @@
 <footer th:replace="~{fragments :: footer}"></footer>
 <div th:replace="~{fragments :: scripts}"></div>
 <script th:src="@{/js/main.js}"></script>
-<script>
+<script th:inline="javascript">
     function toggleMobileFilter() {
         var panel = document.querySelector('.filter-panel');
         panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
     }
-    $(document).ready(function () { updateCartCount(); });
+
+    $(document).ready(function () {
+        updateCartCount();
+
+        var page       = /*[[${products.number}]]*/ 0;
+        var totalPages = /*[[${products.totalPages}]]*/ 1;
+        var loading    = false;
+        var category   = /*[[${selectedCat}]]*/ '';
+        var brand      = /*[[${selectedBrand}]]*/ '';
+        var q          = /*[[${query}]]*/ '';
+        var sortBy     = /*[[${sortBy}]]*/ 'sellingPrice';
+        var sortDir    = /*[[${sortDir}]]*/ 'asc';
+        var hasMore    = true;
+
+        $('#scrollLoader').hide();
+
+        function loadMore() {
+            if (loading || page + 1 >= totalPages) return;
+            loading = true;
+            $('#scrollLoader').show();
+
+            $.get('/products/browse/more', {
+                page:     page + 1,
+                category: category,
+                brand:    brand,
+                q:        q,
+                sortBy:   sortBy,
+                sortDir:  sortDir
+            }, function (html) {
+                page++;
+                $('#productGrid').append(html);
+            }).always(function () {
+                loading = false;
+                $('#scrollLoader').hide();
+            });;
+        }
+
+        $(window).on('scroll', function () {
+            // when user scrolled to 200px before page bottom
+            if ($(window).scrollTop() + $(window).height() >= $(document).height() - 200) {
+                loadMore();
+            }
+        });
+    });
 </script>
 </body>
 </html>

@@ -46,7 +46,7 @@ public class HomeController {
                          @RequestParam(required = false) Long brand,
                          @RequestParam(required = false) String q,
                          @RequestParam(defaultValue = "0")  int page,
-                         @RequestParam(defaultValue = "12") int size,
+                         @RequestParam(defaultValue = "8") int size,
                          @RequestParam(defaultValue = "sellingPrice") String sortBy,
                          @RequestParam(defaultValue = "asc")          String sortDir,
                          Model model) {
@@ -64,6 +64,23 @@ public class HomeController {
         model.addAttribute("sortDir",       sortDir);
         logger.info("[HomeController] browse : END");
         return "customer/browse";
+    }
+
+    @GetMapping("/products/browse/more")
+    public String browseMore(@RequestParam(required = false) Long category,
+                             @RequestParam(required = false) Long brand,
+                             @RequestParam(required = false) String q,
+                             @RequestParam(defaultValue = "0")  int page,
+                             @RequestParam(defaultValue = "8") int size,
+                             @RequestParam(defaultValue = "sellingPrice") String sortBy,
+                             @RequestParam(defaultValue = "asc")          String sortDir,
+                             Model model) {
+        logger.info("[HomeController] browseMore : END");
+        Sort.Direction dir = sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        model.addAttribute("products", productService.browseProducts(category, brand, q,
+                PageRequest.of(page, size, Sort.by(dir, sortBy))));
+        logger.info("[HomeController] browseMore : END");
+        return "customer/browse-more";
     }
 
     @GetMapping("/products/detail/{id}")

@@ -1,0 +1,59 @@
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+<th:block th:each="inv : ${products.content}">
+<div class="col-6 col-md-4 col-lg-3">
+    <div class="product-card h-100">
+        <div th:if="${inv.discountPct != null and inv.discountPct.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+             class="product-badge"
+             th:text="${#numbers.formatDecimal(inv.discountPct,1,0) + '% OFF'}"></div>
+        <div th:if="${inv.product.isImported}" class="product-badge badge-imported">
+            <i class="fas fa-globe-americas"></i>
+        </div>
+        <a th:href="@{/products/detail/{id}(id=${inv.id})}">
+            <div class="product-img-wrap">
+                <img th:src="${inv.product.getPrimaryImageUrl()}"
+                     th:alt="${inv.product.name}"
+                     onerror="this.src='/images/product-placeholder.png'"/>
+            </div>
+        </a>
+        <div class="product-body">
+            <p class="product-meta"
+               th:text="${inv.product.category.name} + ' · ' + ${inv.product.volumeMl != null ? inv.product.volumeMl + 'ml' : ''}"></p>
+            <a th:href="@{/products/detail/{id}(id=${inv.id})}" class="text-decoration-none">
+                <p class="product-name" th:text="${inv.product.name}"></p>
+            </a>
+            <p class="product-meta" th:if="${inv.product.brand != null}"
+               th:text="${inv.product.brand.name}"></p>
+            <div class="product-price">
+                <span class="price-current" th:text="'₹' + ${inv.sellingPrice}"></span>
+                <span class="price-mrp"
+                      th:if="${inv.mrp.compareTo(inv.sellingPrice) > 0}"
+                      th:text="'₹' + ${inv.mrp}"></span>
+            </div>
+            <p class="product-meta" th:if="${inv.product.alcoholContent != null}"
+               th:text="'ABV: ' + ${inv.product.alcoholContent} + '%'"></p>
+            <div th:if="${!inv.isInStock()}"
+                 class="btn-add-cart"
+                 style="background:#333;color:#666;cursor:not-allowed;text-align:center;padding:0.5rem;border-radius:var(--radius-sm);">
+                Out of Stock
+            </div>
+            <button th:if="${inv.isInStock()}"
+                    class="btn-add-cart"
+                    th:data-inventory-id="${inv.id}"
+                    onclick="addToCart(this)"
+                    sec:authorize="hasRole('CUSTOMER')">
+                <i class="fas fa-cart-plus me-1"></i>Add to Cart
+            </button>
+            <a th:if="${inv.isInStock()}"
+               th:href="@{/auth/login}"
+               class="btn-add-cart"
+               sec:authorize="isAnonymous()">
+                <i class="fas fa-sign-in-alt me-1"></i>Login to Buy
+            </a>
+        </div>
+    </div>
+</div>
+</th:block>
+</body>
+</html>

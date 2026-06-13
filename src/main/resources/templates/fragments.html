@@ -29,7 +29,7 @@
 <!-- ============================================================
      FRAGMENT: navbar (public)
      ============================================================ -->
-<nav th:fragment="navbar" class="sl-navbar navbar navbar-expand-lg">
+<nav th:fragment="navbar" class="sl-navbar navbar navbar-expand">
     <div class="container-fluid px-4">
 
         <!-- Brand -->
@@ -37,16 +37,10 @@
             Spirit<span>Lane</span>
         </a>
 
-        <!-- Toggler -->
-        <button class="navbar-toggler border-0" type="button"
-                data-bs-toggle="collapse" data-bs-target="#navbarMain">
-            <i class="fas fa-bars" style="color:var(--primary-light)"></i>
-        </button>
-
         <div class="collapse navbar-collapse" id="navbarMain">
 
             <!-- Search -->
-            <div class="d-flex align-items-center ms-3 me-auto">
+            <div class="d-flex align-items-center ms-3 me-auto" sec:authorize="isAuthenticated()">
                 <form method="get" th:action="@{/products/browse}" class="d-flex">
                     <input type="text" name="q" class="search-input"
                            placeholder="Search whiskey, beer, wine..."
@@ -58,7 +52,7 @@
             </div>
 
             <ul class="navbar-nav align-items-center gap-1">
-                <li class="nav-item">
+                <li class="nav-item" sec:authorize="isAuthenticated()">
                     <a class="nav-link" th:href="@{/products/browse}">
                         <i class="fas fa-store me-1"></i>Browse
                     </a>
@@ -85,7 +79,7 @@
                     <a class="nav-link dropdown-toggle d-flex align-items-center gap-2"
                        href="#" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user-circle fa-lg"></i>
-                        <span sec:authentication="name" class="d-none d-md-inline"></span>
+                        <!-- <span sec:authentication="name" class="d-none d-md-inline"></span> -->
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end"
                         style="background:var(--dark-card);border-color:var(--border-color);">
@@ -133,7 +127,7 @@
 <!-- ============================================================
      FRAGMENT: footer
      ============================================================ -->
-<footer th:fragment="footer" class="sl-footer">
+<footer th:fragment="footer" class="sl-footer" sec:authorize="isAnonymous()">
     <div class="container">
         <div class="row g-4">
             <div class="col-lg-4">

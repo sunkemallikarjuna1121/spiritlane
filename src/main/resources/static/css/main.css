@@ -109,6 +109,7 @@ h1, h2, h3, h4, h5, h6 {
     border-radius: 30px;
     padding: 0.45rem 1.2rem;
     width: 300px;
+    max-width: 200px;
     transition: all var(--transition);
 }
 
@@ -1002,3 +1003,10 @@ input[type="range"] {
 .sl-breadcrumb li:last-child { color: var(--primary-light); }
 .sl-breadcrumb a { color: var(--text-muted); }
 .sl-breadcrumb a:hover { color: var(--primary-light); }
+
+#productGrid {
+    min-height: 80vh;
+    align-content: flex-start;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
