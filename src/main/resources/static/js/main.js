@@ -227,7 +227,17 @@ $(document).ready(function () {
    MOBILE NAV CLOSE ON LINK CLICK
    ============================================================ */
 $(document).ready(function () {
-    $('.navbar-nav .nav-link').on('click', function () {
+    // Only close navbar when clicking real nav links — NOT dropdown toggles
+    $('.navbar-nav .nav-link:not(.dropdown-toggle)').on('click', function () {
+        var toggler = document.querySelector('.navbar-toggler');
+        var collapse = document.querySelector('#navbarMain');
+        if (collapse && collapse.classList.contains('show') && toggler) {
+            toggler.click();
+        }
+    });
+
+    // Close navbar when a dropdown ITEM (inside the menu) is clicked
+    $('.navbar-nav .dropdown-menu .dropdown-item').on('click', function () {
         var toggler = document.querySelector('.navbar-toggler');
         var collapse = document.querySelector('#navbarMain');
         if (collapse && collapse.classList.contains('show') && toggler) {

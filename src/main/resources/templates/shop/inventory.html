@@ -45,7 +45,7 @@
             <div class="table-header">
                 <h3>Products in Stock (<span th:text="${#lists.size(inventory)}"></span>)</h3>
                 <input type="text" class="table-search" placeholder="Search products..."
-                       id="invSearch" onkeyup="filterTable('invSearch','invBody')"/>
+                       id="invSearch" onkeyup="filterTable('invSearch','invBody')" style="width:100%;max-width:280px;"/>
             </div>
             <div style="overflow-x:auto;">
                 <table class="sl-table">
