@@ -1,13 +1,14 @@
 package com.spiritlane.dto;
 
 import jakarta.validation.constraints.*;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 // ============================================================
 // Registration DTO
 // ============================================================
-public class RegistrationDto {
+public class RegistrationDto implements Serializable {
 
     @NotBlank(message = "Full name is required")
     @Size(min = 3, max = 150, message = "Name must be 3–150 characters")

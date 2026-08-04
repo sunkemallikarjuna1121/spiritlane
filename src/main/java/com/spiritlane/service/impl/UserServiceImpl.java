@@ -110,6 +110,27 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public boolean emailExists(String email) {
+        return userRepository.existsByEmail(email.toLowerCase().trim());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean phoneExists(String phone) {
+        return userRepository.existsByPhone(phone);
+    }
+
+    @Override
+    public void resetPasswordByEmail(String email, String newPassword) {
+        User user = userRepository.findByEmail(email.toLowerCase().trim())
+                .orElseThrow(() -> new ResourceNotFoundException("No user found with email: " + email));
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        log.info("Password reset via OTP for user: {}", user.getEmail());
+    }
+
+    @Override
     public UserAddress addAddress(Long userId, AddressDto dto) {
         User user = findById(userId);
         long count = addressRepository.countByUserId(userId);

@@ -862,6 +862,23 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .filter-checkbox input[type="checkbox"] { accent-color: var(--primary); }
+.filter-checkbox input[type="radio"] { accent-color: var(--primary); }
+
+/* ─── Filter / Sort Dropdown (toolbar) ─── */
+.filter-dropdown-menu {
+    min-width: 260px;
+    max-height: 70vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-md);
+}
+
+.filter-dropdown-menu .filter-group-label {
+    margin-bottom: 0.5rem;
+}
+
+.filter-dropdown-menu .filter-checkbox {
+    margin-bottom: 0.5rem;
+}
 
 /* ─── Pagination ─── */
 .sl-pagination { display: flex; justify-content: center; gap: 0.3rem; margin-top: 2rem; }
