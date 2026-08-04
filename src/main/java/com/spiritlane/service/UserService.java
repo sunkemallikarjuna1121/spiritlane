@@ -20,6 +20,17 @@ public interface UserService {
 
     void changePassword(Long userId, String oldPassword, String newPassword);
 
+    boolean emailExists(String email);
+
+    boolean phoneExists(String phone);
+
+    /**
+     * Resets a user's password by email without requiring the old password.
+     * Intended to be called only after the caller has verified an OTP
+     * for the forgot-password flow.
+     */
+    void resetPasswordByEmail(String email, String newPassword);
+
     // Address management
     UserAddress addAddress(Long userId, AddressDto dto);
 

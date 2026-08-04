@@ -9,89 +9,8 @@
 <div class="container-fluid px-4 mt-4">
     <div class="row g-4">
 
-        <!-- ─── Filter Sidebar ─── -->
-        <div class="col-lg-2 col-md-3">
-            <div class="filter-panel">
-                <div class="filter-title">
-                    <i class="fas fa-sliders-h me-2"></i>Filters
-                </div>
-
-                <form id="filterForm" method="get" th:action="@{/products/browse}">
-
-                    <!-- Category -->
-                    <div class="filter-group">
-                        <div class="filter-group-label">Category</div>
-                        <div th:each="cat : ${categories}">
-                            <label class="filter-checkbox">
-                                <input type="radio" name="category"
-                                       th:value="${cat.id}"
-                                       th:checked="${selectedCat != null and selectedCat == cat.id}"
-                                       onchange="document.getElementById('filterForm').submit()"/>
-                                <span th:text="${cat.name}"></span>
-                            </label>
-                        </div>
-                        <label class="filter-checkbox mt-1">
-                            <input type="radio" name="category" value=""
-                                   th:checked="${selectedCat == null}"
-                                   onchange="document.getElementById('filterForm').submit()"/>
-                            <span>All Categories</span>
-                        </label>
-                    </div>
-
-                    <hr class="gold-divider" style="margin:0.8rem 0"/>
-
-                    <!-- Brand -->
-                    <div class="filter-group">
-                        <div class="filter-group-label">Brand</div>
-                        <div th:each="brand : ${brands}">
-                            <label class="filter-checkbox">
-                                <input type="radio" name="brand"
-                                       th:value="${brand.id}"
-                                       th:checked="${selectedBrand != null and selectedBrand == brand.id}"
-                                       onchange="document.getElementById('filterForm').submit()"/>
-                                <span th:text="${brand.name}"></span>
-                            </label>
-                        </div>
-                        <label class="filter-checkbox mt-1">
-                            <input type="radio" name="brand" value=""
-                                   th:checked="${selectedBrand == null}"
-                                   onchange="document.getElementById('filterForm').submit()"/>
-                            <span>All Brands</span>
-                        </label>
-                    </div>
-
-                    <hr class="gold-divider" style="margin:0.8rem 0"/>
-
-                    <!-- Sort -->
-                    <div class="filter-group">
-                        <div class="filter-group-label">Sort By</div>
-                        <select name="sortBy" class="sl-form-control"
-                                onchange="document.getElementById('filterForm').submit()">
-                            <option value="sellingPrice" th:selected="${sortBy == 'sellingPrice'}">Price</option>
-                            <option value="product.name" th:selected="${sortBy == 'product.name'}">Name</option>
-                            <option value="discountPct"  th:selected="${sortBy == 'discountPct'}">Discount</option>
-                        </select>
-                        <select name="sortDir" class="sl-form-control mt-2"
-                                onchange="document.getElementById('filterForm').submit()">
-                            <option value="asc"  th:selected="${sortDir == 'asc'}">Low to High</option>
-                            <option value="desc" th:selected="${sortDir == 'desc'}">High to Low</option>
-                        </select>
-                    </div>
-
-                    <!-- hidden fields to preserve state -->
-                    <input type="hidden" name="q" th:value="${query}"/>
-                    <input type="hidden" name="page" value="0"/>
-
-                    <a th:href="@{/products/browse}" class="btn-outline-sl w-100 mt-2"
-                       style="font-size:0.82rem;padding:0.4rem;">
-                        <i class="fas fa-times me-1"></i>Clear Filters
-                    </a>
-                </form>
-            </div>
-        </div>
-
         <!-- ─── Products Grid ─── -->
-        <div class="col-lg-10 col-md-9">
+        <div class="col-12">
 
             <!-- Top bar -->
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
@@ -105,10 +24,100 @@
                     <small style="color:var(--text-muted);"
                            th:text="${products.totalElements} + ' products found'"></small>
                 </div>
-                <!-- Mobile filter toggle -->
-                <button class="btn-outline-sl d-md-none" onclick="toggleMobileFilter()">
-                    <i class="fas fa-filter me-1"></i>Filter
-                </button>
+
+                <!-- ─── Filter / Sort dropdowns ─── -->
+                <form id="filterForm" method="get" th:action="@{/products/browse}"
+                      class="d-flex gap-2 flex-wrap">
+
+                    <input type="hidden" name="q" th:value="${query}"/>
+                    <input type="hidden" name="page" value="0"/>
+
+                    <!-- Filter dropdown -->
+                    <div class="dropdown">
+                        <button type="button" class="btn-outline-sl dropdown-toggle"
+                                data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            <i class="fas fa-filter me-1"></i>Filter
+                            <span th:if="${selectedCat != null or selectedBrand != null}"
+                                  class="badge rounded-pill"
+                                  style="background:var(--primary);color:var(--dark);margin-left:0.3rem;">•</span>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end filter-dropdown-menu p-3"
+                             style="background:var(--dark-card);border-color:var(--border-color);">
+
+                            <!-- Category -->
+                            <div class="filter-group">
+                                <div class="filter-group-label">Category</div>
+                                <div th:each="cat : ${categories}">
+                                    <label class="filter-checkbox">
+                                        <input type="radio" name="category"
+                                               th:value="${cat.id}"
+                                               th:checked="${selectedCat != null and selectedCat == cat.id}"
+                                               onchange="document.getElementById('filterForm').submit()"/>
+                                        <span th:text="${cat.name}"></span>
+                                    </label>
+                                </div>
+                                <label class="filter-checkbox mt-1">
+                                    <input type="radio" name="category" value=""
+                                           th:checked="${selectedCat == null}"
+                                           onchange="document.getElementById('filterForm').submit()"/>
+                                    <span>All Categories</span>
+                                </label>
+                            </div>
+
+                            <hr class="gold-divider" style="margin:0.8rem 0"/>
+
+                            <!-- Brand -->
+                            <div class="filter-group mb-0">
+                                <div class="filter-group-label">Brand</div>
+                                <div th:each="brand : ${brands}">
+                                    <label class="filter-checkbox">
+                                        <input type="radio" name="brand"
+                                               th:value="${brand.id}"
+                                               th:checked="${selectedBrand != null and selectedBrand == brand.id}"
+                                               onchange="document.getElementById('filterForm').submit()"/>
+                                        <span th:text="${brand.name}"></span>
+                                    </label>
+                                </div>
+                                <label class="filter-checkbox mt-1">
+                                    <input type="radio" name="brand" value=""
+                                           th:checked="${selectedBrand == null}"
+                                           onchange="document.getElementById('filterForm').submit()"/>
+                                    <span>All Brands</span>
+                                </label>
+                            </div>
+
+                            <a th:href="@{/products/browse}" class="btn-outline-sl w-100 mt-3"
+                               style="font-size:0.82rem;padding:0.4rem;">
+                                <i class="fas fa-times me-1"></i>Clear Filters
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Sort dropdown -->
+                    <div class="dropdown">
+                        <button type="button" class="btn-outline-sl dropdown-toggle"
+                                data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                            <i class="fas fa-sort me-1"></i>Sort
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end filter-dropdown-menu p-3"
+                             style="background:var(--dark-card);border-color:var(--border-color);min-width:220px;">
+                            <div class="filter-group mb-0">
+                                <div class="filter-group-label">Sort By</div>
+                                <select name="sortBy" class="sl-form-control"
+                                        onchange="document.getElementById('filterForm').submit()">
+                                    <option value="sellingPrice" th:selected="${sortBy == 'sellingPrice'}">Price</option>
+                                    <option value="product.name" th:selected="${sortBy == 'product.name'}">Name</option>
+                                    <option value="discountPct"  th:selected="${sortBy == 'discountPct'}">Discount</option>
+                                </select>
+                                <select name="sortDir" class="sl-form-control mt-2"
+                                        onchange="document.getElementById('filterForm').submit()">
+                                    <option value="asc"  th:selected="${sortDir == 'asc'}">Low to High</option>
+                                    <option value="desc" th:selected="${sortDir == 'desc'}">High to Low</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
 
             <!-- Alert messages -->
@@ -199,11 +208,6 @@
 <div th:replace="~{fragments :: scripts}"></div>
 <script th:src="@{/js/main.js}"></script>
 <script th:inline="javascript">
-    function toggleMobileFilter() {
-        var panel = document.querySelector('.filter-panel');
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-    }
-
     $(document).ready(function () {
         updateCartCount();
 
