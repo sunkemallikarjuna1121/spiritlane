@@ -7,6 +7,8 @@ import com.spiritlane.security.CustomUserDetails;
 import com.spiritlane.service.*;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,6 +16,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/shop")
@@ -109,6 +114,12 @@ public class ShopController {
         logger.info("[ShopController] addInventory() : START");
         try {
             Shop shop = shopService.findByOwnerId(principal.getId());
+            if (inventory.getProduct() == null || inventory.getProduct().getId() == null) {
+                throw new BusinessException("Please select a product.");
+            }
+            if (productService.existsInInventory(shop.getId(), inventory.getProduct().getId())) {
+                throw new BusinessException("This product is already in your inventory. Update its stock instead.");
+            }
             inventory.setShop(shop);
             productService.saveInventory(inventory);
             ra.addFlashAttribute("successMsg", "Product added to inventory.");
@@ -117,6 +128,73 @@ public class ShopController {
         }
         logger.info("[ShopController] addInventory() : END");
         return "redirect:/shop/inventory";
+    }
+
+    /**
+     * JSON version of addInventory used by the "Add Product" modal so the
+     * shop owner can add several products back-to-back without the page
+     * reloading each time. Returns the newly created inventory row's data
+     * so the client can append it to the table in place.
+     */
+    @PostMapping("/inventory/add-ajax")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> addInventoryAjax(@AuthenticationPrincipal CustomUserDetails principal,
+                                                                 @ModelAttribute ShopInventory inventory) {
+        logger.info("[ShopController] addInventoryAjax() : START");
+        Map<String, Object> body = new LinkedHashMap<>();
+        try {
+            Shop shop = shopService.findByOwnerId(principal.getId());
+
+            if (inventory.getProduct() == null || inventory.getProduct().getId() == null) {
+                body.put("success", false);
+                body.put("message", "Please select a product.");
+                return ResponseEntity.badRequest().body(body);
+            }
+
+            Long productId = inventory.getProduct().getId();
+            if (productService.existsInInventory(shop.getId(), productId)) {
+                body.put("success", false);
+                body.put("message", "This product is already in your inventory.");
+                body.put("duplicate", true);
+                body.put("productId", productId);
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+            }
+
+            inventory.setShop(shop);
+            ShopInventory saved = productService.saveInventory(inventory);
+            // Re-fetch with images so the product relation is fully populated for the response
+            saved = productService.findInventoryById(saved.getId());
+            Product product = saved.getProduct();
+
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("id", saved.getId());
+            data.put("productId", product.getId());
+            data.put("productName", product.getName());
+            data.put("brand", product.getBrand() != null ? product.getBrand().getName() : "");
+            data.put("category", product.getCategory() != null ? product.getCategory().getName() : "");
+            data.put("volumeMl", product.getVolumeMl());
+            data.put("imageUrl", product.getPrimaryImageUrl());
+            data.put("mrp", saved.getMrp());
+            data.put("sellingPrice", saved.getSellingPrice());
+            data.put("discountPct", saved.getDiscountPct());
+            data.put("stockQuantity", saved.getStockQuantity());
+            data.put("isAvailable", saved.getIsAvailable());
+
+            body.put("success", true);
+            body.put("message", "Product added to inventory.");
+            body.put("inventory", data);
+            logger.info("[ShopController] addInventoryAjax() : END");
+            return ResponseEntity.ok(body);
+        } catch (BusinessException e) {
+            body.put("success", false);
+            body.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(body);
+        } catch (Exception e) {
+            logger.error("[ShopController] addInventoryAjax() error", e);
+            body.put("success", false);
+            body.put("message", "Could not add product. Please check the values and try again.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+        }
     }
 
     @PostMapping("/inventory/{id}/update-stock")
