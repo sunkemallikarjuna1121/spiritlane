@@ -132,4 +132,10 @@ public class ProductServiceImpl implements ProductService {
         return new org.springframework.data.domain.PageImpl<>(sorted, pageable, idPage.getTotalElements());
 
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsInInventory(Long shopId, Long productId) {
+        return inventoryRepository.existsByShopIdAndProductId(shopId, productId);
+    }
 }

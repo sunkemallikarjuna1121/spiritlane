@@ -35,7 +35,6 @@ public class CartController {
 
     /* ─── View Cart ─── */
     @GetMapping
-    @Transactional(readOnly = true)
     public String viewCart(@AuthenticationPrincipal CustomUserDetails principal,
                         Model model) {
 

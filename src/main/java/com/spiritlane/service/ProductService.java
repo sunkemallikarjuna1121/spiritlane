@@ -20,4 +20,5 @@ public interface ProductService {
     ShopInventory findInventoryById(Long id);
     List<ShopInventory> getShopInventory(Long shopId);
     Page<ShopInventory> browseProducts(Long catId, Long brandId, String query, Pageable pageable);
+    boolean existsInInventory(Long shopId, Long productId);
 }

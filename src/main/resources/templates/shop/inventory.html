@@ -33,7 +33,7 @@
                 <p class="page-subtitle" th:text="'Managing products for: ' + ${shop.shopName}"></p>
             </div>
             <button class="btn-primary-sl px-3 py-2" style="font-size:0.9rem;"
-                    onclick="document.getElementById('addProductModal').style.display='flex'">
+                    onclick="openAddModal()">
                 <i class="fas fa-plus me-2"></i>Add Product
             </button>
         </div>
@@ -43,7 +43,7 @@
         <!-- Inventory Table -->
         <div class="table-container">
             <div class="table-header">
-                <h3>Products in Stock (<span th:text="${#lists.size(inventory)}"></span>)</h3>
+                <h3>Products in Stock (<span id="invCount" th:text="${#lists.size(inventory)}"></span>)</h3>
                 <input type="text" class="table-search" placeholder="Search products..."
                        id="invSearch" onkeyup="filterTable('invSearch','invBody')" style="width:100%;max-width:280px;"/>
             </div>
@@ -120,7 +120,7 @@
                                 </a>
                             </td>
                         </tr>
-                        <tr th:if="${#lists.isEmpty(inventory)}">
+                        <tr th:if="${#lists.isEmpty(inventory)}" id="emptyRow">
                             <td colspan="8" class="text-center" style="color:var(--text-muted);padding:3rem;">
                                 <div style="font-size:3rem;">📦</div>
                                 <p class="mt-2">No products added yet. Click "Add Product" to get started.</p>
@@ -138,7 +138,7 @@
      style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:2000;align-items:center;justify-content:center;padding:1rem;">
     <div style="background:var(--dark-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:2rem;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;position:relative;">
         <!-- Close -->
-        <button onclick="document.getElementById('addProductModal').style.display='none'"
+        <button type="button" onclick="closeAddModal()"
                 style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;">
             <i class="fas fa-times"></i>
         </button>
@@ -147,39 +147,52 @@
             <i class="fas fa-plus-circle me-2"></i>Add Product to Inventory
         </h4>
 
-        <form th:action="@{/shop/inventory/add}" method="post">
+        <form id="addInventoryForm" th:action="@{/shop/inventory/add}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
-            <div class="sl-form-group">
+            <!-- Searchable product picker -->
+            <div class="sl-form-group product-picker">
                 <label class="sl-form-label">Select Product *</label>
-                <select name="product.id" class="sl-form-control" required>
-                    <option value="">-- Choose a product --</option>
-                    <option th:each="p : ${allProducts}"
-                        th:value="${p.id}"
-                        th:text="${p.name + ' (' + p.category.name + ')' + (p.volumeMl != null ? ' ' + p.volumeMl + 'ml' : '')}">
-                    </option>
-                </select>
+                <div class="product-search-wrap">
+                    <i class="fas fa-search product-search-icon"></i>
+                    <input type="text" id="productSearchInput" class="sl-form-control product-search-input"
+                           placeholder="Type a product or brand name..." autocomplete="off" required/>
+                </div>
+                <input type="hidden" name="product.id" id="productIdInput"/>
+                <div class="product-search-hint">Already-added products are hidden from the results.</div>
+
+                <!-- Live preview of the selected product -->
+                <div id="productPreview" class="product-preview" style="display:none;">
+                    <img id="previewImg" src="" alt="" onerror="this.src='/images/product-placeholder.png'"/>
+                    <div class="preview-info">
+                        <div id="previewName" class="preview-name"></div>
+                        <div id="previewMeta" class="preview-meta"></div>
+                    </div>
+                    <button type="button" id="previewClearBtn" class="preview-clear" title="Change product">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="row g-3">
                 <div class="col-md-6">
                     <div class="sl-form-group">
                         <label class="sl-form-label">MRP (₹) *</label>
-                        <input type="number" name="mrp" class="sl-form-control"
+                        <input type="number" name="mrp" id="mrpInput" class="sl-form-control"
                                placeholder="0.00" step="0.01" min="0" required/>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="sl-form-group">
                         <label class="sl-form-label">Selling Price (₹) *</label>
-                        <input type="number" name="sellingPrice" class="sl-form-control"
+                        <input type="number" name="sellingPrice" id="sellingPriceInput" class="sl-form-control"
                                placeholder="0.00" step="0.01" min="0" required/>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="sl-form-group">
                         <label class="sl-form-label">Discount %</label>
-                        <input type="number" name="discountPct" class="sl-form-control"
+                        <input type="number" name="discountPct" id="discountInput" class="sl-form-control"
                                placeholder="0" step="0.01" min="0" max="100" value="0"/>
                     </div>
                 </div>
@@ -206,12 +219,16 @@
                 </div>
             </div>
 
-            <div class="d-flex gap-3 mt-3">
-                <button type="submit" class="btn-primary-sl px-4 py-2">
-                    <i class="fas fa-plus me-2"></i>Add to Inventory
+            <div id="modalFormMsg" class="modal-form-msg" style="display:none;"></div>
+
+            <div class="d-flex gap-3 mt-3 flex-wrap">
+                <button type="submit" id="saveAddAnotherBtn" class="btn-primary-sl px-4 py-2">
+                    <i class="fas fa-plus me-2"></i>Save &amp; Add Another
                 </button>
-                <button type="button" class="btn-outline-sl px-4 py-2"
-                        onclick="document.getElementById('addProductModal').style.display='none'">
+                <button type="submit" id="saveCloseBtn" class="btn-outline-sl px-4 py-2">
+                    <i class="fas fa-check me-2"></i>Save &amp; Close
+                </button>
+                <button type="button" class="btn-outline-sl px-4 py-2" onclick="closeAddModal()">
                     Cancel
                 </button>
             </div>
@@ -219,7 +236,32 @@
     </div>
 </div>
 
+<!-- Product data for the searchable picker (id, name, brand, category, volume, image) -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var ALL_PRODUCTS = [
+        /*[# th:each="p : ${allProducts}"]*/
+        {
+            id: /*[[${p.id}]]*/ 0,
+            name: /*[[${p.name}]]*/ '',
+            brand: /*[[${p.brand != null ? p.brand.name : ''}]]*/ '',
+            category: /*[[${p.category != null ? p.category.name : ''}]]*/ '',
+            volumeMl: /*[[${p.volumeMl}]]*/ null,
+            image: /*[[${p.getPrimaryImageUrl()}]]*/ ''
+        },
+        /*[/]*/
+    ];
+    var EXISTING_PRODUCT_IDS = [
+        /*[# th:each="inv : ${inventory}"]*/
+        /*[[${inv.product.id}]]*/ 0,
+        /*[/]*/
+    ];
+    var ADD_INVENTORY_AJAX_URL = /*[[@{/shop/inventory/add-ajax}]]*/ '/shop/inventory/add-ajax';
+    /*]]>*/
+</script>
+
 <div th:replace="~{fragments :: scripts}"></div>
 <script th:src="@{/js/main.js}"></script>
+<script th:src="@{/js/inventory-add.js}"></script>
 </body>
 </html>

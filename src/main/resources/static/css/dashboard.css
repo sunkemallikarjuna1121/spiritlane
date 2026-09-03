@@ -308,3 +308,134 @@
         padding: 0.75rem 1rem;
     }
 }
+
+/* ============================================================
+   Add-to-Inventory: searchable product picker
+   ============================================================ */
+.product-picker { position: relative; }
+
+.product-search-wrap {
+    position: relative;
+}
+
+.product-search-icon {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    pointer-events: none;
+}
+
+.product-search-input {
+    padding-left: 2.2rem !important;
+}
+
+.product-search-hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.3rem;
+}
+
+.product-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    background: var(--dark-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+.product-preview img {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    background: var(--dark);
+    flex-shrink: 0;
+}
+
+.product-preview .preview-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.product-preview .preview-name {
+    font-weight: 600;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.product-preview .preview-meta {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.product-preview .preview-clear {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.25rem;
+    flex-shrink: 0;
+}
+
+.product-preview .preview-clear:hover { color: var(--danger); }
+
+/* jQuery UI autocomplete dropdown, restyled to match the dark theme */
+.sl-autocomplete-menu.ui-autocomplete {
+    background: var(--dark-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-sm) !important;
+    box-shadow: var(--shadow-md) !important;
+    padding: 0.3rem !important;
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 3000 !important;
+}
+
+.sl-autocomplete-menu .ui-menu-item {
+    list-style: none;
+}
+
+.sl-autocomplete-menu .ui-menu-item-wrapper {
+    color: var(--text-light) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 0.5rem 0.6rem !important;
+    font-size: 0.85rem;
+}
+
+.sl-autocomplete-menu .ui-menu-item-wrapper.ui-state-active,
+.sl-autocomplete-menu .ui-menu-item-wrapper:hover {
+    background: rgba(200,134,10,0.2) !important;
+    color: var(--primary-light) !important;
+}
+
+/* Inline success / error feedback inside the Add Product form */
+.modal-form-msg {
+    margin-top: 0.9rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+}
+
+.modal-form-msg.is-success {
+    background: rgba(40,167,69,0.15);
+    color: #6ee08a;
+    border: 1px solid rgba(40,167,69,0.3);
+}
+
+.modal-form-msg.is-error {
+    background: rgba(220,53,69,0.15);
+    color: #ff6b6b;
+    border: 1px solid rgba(220,53,69,0.3);
+}
